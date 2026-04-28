@@ -1,90 +1,125 @@
-@import "tailwindcss";
-
-@theme {
-  --color-gl-ink: #0a0a0a;
-  --color-gl-paper: #ffffff;
-  --color-gl-mute: #6b6b6b;
-  --color-gl-soft: #f4f4f2;
-  --color-gl-line: #1a1a1a;
-  --color-gl-hairline: rgba(10, 10, 10, 0.12);
-  --color-gl-danger: #8b1f1f;
-  --color-gl-danger-soft: #faecec;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-               "Helvetica Neue", Arial, sans-serif;
+.gl-page {
+  min-height: 100vh;
+  background: var(--gl-soft);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
 }
 
-:root {
-  color-scheme: light;
+.gl-shell {
+  width: 100%;
+  max-width: 600px;
+  background: var(--gl-paper);
+  border: 1px solid var(--gl-hairline);
+  padding: 40px 36px;
 }
 
-html, body {
-  background: var(--color-gl-paper);
-  color: var(--color-gl-ink);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+.gl-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 20px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--gl-hairline);
 }
 
-.gl-label {
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-gl-mute);
+.gl-h1 {
+  font-size: 22px;
   font-weight: 500;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.gl-input {
-  width: 100%;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--color-gl-line);
-  padding: 8px 0;
-  font-size: 15px;
-  color: var(--color-gl-ink);
-  outline: none;
-}
-.gl-input:focus {
-  border-bottom-color: var(--color-gl-ink);
-  box-shadow: 0 1px 0 0 var(--color-gl-ink);
+.gl-h2 {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 24px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--gl-ink);
+  letter-spacing: -0.01em;
 }
 
-.gl-btn {
-  display: inline-block;
-  width: 100%;
-  background: var(--color-gl-ink);
-  color: var(--color-gl-paper);
-  border: 1px solid var(--color-gl-ink);
-  padding: 12px 16px;
+.gl-h2-archived {
+  color: var(--gl-mute);
+  border-bottom-color: var(--gl-mute);
+}
+
+.gl-section {
+  margin-bottom: 48px;
+}
+
+.gl-subsection {
+  margin-bottom: 28px;
+}
+
+.gl-row {
+  display: block;
+  text-decoration: none;
+  color: var(--gl-ink);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gl-hairline);
+  font-size: 16px;
+}
+
+.gl-row:hover {
+  color: var(--gl-ink);
+  background: var(--gl-soft);
+}
+
+.gl-row-archived {
+  color: var(--gl-mute);
+}
+
+.gl-archived-block {
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--gl-mute);
+}
+
+.gl-footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--gl-hairline);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--gl-mute);
+}
+
+.gl-btn-sm {
+  background: var(--gl-ink);
+  color: var(--gl-paper);
+  border: 1px solid var(--gl-ink);
+  padding: 8px 14px;
   font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
-}
-.gl-btn:hover:not(:disabled) {
-  background: var(--color-gl-paper);
-  color: var(--color-gl-ink);
-}
-.gl-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.gl-link {
-  color: var(--color-gl-ink);
   text-decoration: none;
-  border-bottom: 1px solid var(--color-gl-line);
-  padding-bottom: 1px;
-}
-.gl-link:hover {
-  border-bottom-color: var(--color-gl-mute);
+  display: inline-block;
 }
 
-.gl-error {
-  background: var(--color-gl-danger-soft);
-  border-left: 2px solid var(--color-gl-danger);
-  color: var(--color-gl-danger);
-  padding: 12px 14px;
+.gl-btn-sm:hover {
+  background: var(--gl-paper);
+  color: var(--gl-ink);
+}
+
+.gl-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gl-mute);
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+
+.gl-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--gl-mute);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
