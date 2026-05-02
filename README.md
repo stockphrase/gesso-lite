@@ -1,81 +1,105 @@
-# Step 10.5 — Templates and course settings page
+# Step 11 — Course deletion
 
-Save a course's structural skeleton (assignments, stage names, reading
-filenames as reference) for later reuse. Also adds the course settings
-page itself, which until now didn't exist (the settings link in the
-course detail page pointed nowhere).
+Permanent course deletion with required backup, type-the-title
+confirmation, and "vaporize orphaned users" behavior.
 
-The settings page in this step has two sections: Save as template, and
-Archive/Unarchive. Step 11 will add the Delete section.
-
-## Files (12 total)
+## Files (5 total)
 
 New:
-- supabase/migrations/0008_course_templates.sql
-    `course_templates` table with RLS so each instructor sees their own.
+- lib/supabase/service.ts
+    Service-role Supabase client. Only used server-side; required for
+    deleting auth.users rows (admin operation).
 
-- app/api/templates/save/route.ts
-    POST. Reads the source course's assignments (titles, descriptions,
-    stage names — drops dates and IDs) and reading filenames, inserts
-    a row into `course_templates`.
+- app/api/courses/[id]/backup/route.ts
+    GET. Streams a zip with course metadata, assignments, roster,
+    submissions CSV, audit log, and (optionally) submission/return
+    files. Always run before destructive deletion.
 
-- app/api/templates/[id]/instantiate/route.ts
-    POST. Creates a new course from a template, with all assignments
-    populated and all stage due_dates set to NULL.
-
-- app/api/templates/[id]/delete/route.ts
-    POST. Deletes a template (instructor-owned).
-
-- app/api/courses/[id]/archive/route.ts
-- app/api/courses/[id]/unarchive/route.ts
-    POST. Sets/clears `courses.archived_at`.
-
-- app/templates/page.tsx
-    List of all the instructor's templates.
-
-- app/templates/[id]/page.tsx
-- app/templates/[id]/TemplateClient.tsx
-    Template detail page with assignments preview, instantiation form
-    ("Create course from this template"), and a Delete button.
-
-- app/courses/[id]/settings/page.tsx
-- app/courses/[id]/settings/SettingsClient.tsx
-    The course settings page. Save-as-template flow, archive toggle.
-    Default template name is computed as `{academic-year}-{course-title}`,
-    e.g. `2026-27-Writing 2.04` for a Fall 2026 course.
+- app/api/courses/[id]/delete/route.ts
+    POST. The destructive endpoint. Verifies title confirmation,
+    vaporizes storage objects, deletes the course row (cascades),
+    deletes orphaned auth.users rows.
 
 Replaces:
+- app/courses/[id]/settings/SettingsClient.tsx
+    Adds the Delete section with two-phase confirmation flow.
+- app/courses/[id]/settings/page.tsx
+    Fetches counts (assignments, submissions, returns, etc) for the
+    delete confirmation panel.
 - app/courses/page.tsx
-    Adds a Templates link in the page header alongside "+ New course".
+    Shows a banner when redirected after a successful deletion.
 
 ## Apply
 
-1. Unzip into the repo root:
-       unzip /path/to/gesso-lite-step10p5.zip -d .
+1. Make sure SUPABASE_SERVICE_ROLE_KEY is in .env.local. The service
+   role key is needed to delete auth.users records.
 
-2. Run the migration in the Supabase SQL editor:
-       supabase/migrations/0008_course_templates.sql
+2. Restart your dev server (env changes don't hot-reload):
+       npm run dev
 
-3. Verify the table exists:
-       SELECT count(*) FROM public.course_templates;
+3. Unzip into the repo root:
+       unzip /path/to/gesso-lite-step11.zip -d .
 
-4. Hot reload picks up the file changes.
+4. No database migration this step.
 
-## Test
+## How deletion works
 
-As instructor:
-1. Open any course's settings (the "Settings" button on its home page).
-2. Click "Save as template". Default name is filled in (e.g.
-   `2026-27-Writing 2.04`). Edit if desired, click Save template.
-3. Banner says "Template saved." with a link.
-4. Click the Templates link in the courses list header.
-5. Your template appears with the assignment count.
-6. Click into the template. See its assignments and (if any) the
-   reference list of previous reading filenames.
-7. Use the instantiate form: pick a title (defaults to the template's
-   default), term, and year. Click "Create course from template".
-8. Redirects to the new course's home page. All assignments are there
-   with empty due dates.
-9. Click into an assignment: the stages have names but no dates.
-10. Back to settings on a course, click Archive course. Confirms.
-11. Course list now shows it under "Archived". Re-enter and unarchive.
+1. Instructor clicks "Delete this course…" on settings page.
+2. Confirmation panel reveals: counts of what will be deleted,
+   checkboxes for backup contents, type-the-title field.
+3. Instructor types the exact course title, clicks "Generate backup &
+   delete".
+4. Server generates the backup zip and streams it as a download.
+5. Once the file downloads, panel shows "Backup downloaded. Verify it
+   opened correctly before proceeding." with a "Proceed with deletion"
+   button.
+6. Instructor clicks Proceed → browser confirms → server runs the
+   destructive sequence:
+   - Delete all storage objects under submissions/{id}/, returns/{id}/,
+     and readings/{id}/
+   - Delete the courses row (cascades to assignments, submissions,
+     reading_files, course_memberships, allowed_emails)
+   - For each enrolled non-instructor user: if they're not in any other
+     course, delete their auth.users row (cascades to profiles)
+7. Redirect to /courses with a banner showing the result.
+
+## Test plan
+
+You'll want to use a course you don't mind losing. Try:
+
+1. **Create a test course** via "Use template" or "+ New course".
+   Add an assignment, enroll a test student, have them upload a
+   submission.
+
+2. **Test backup-only**: Click "Save as template" first to keep the
+   skeleton. Then click "Delete this course…", uncheck both file
+   checkboxes (so the backup is metadata-only — quick), type the
+   title, and watch the metadata-only zip download. Cancel before
+   proceeding to deletion to confirm cancel works.
+
+3. **Test full delete**: Open the course again. Trigger the same
+   flow but now check both file checkboxes for a complete backup.
+   After the zip downloads, click "Proceed with deletion".
+
+4. **Verify destruction**:
+   - Course disappears from /courses list with a "deleted" banner.
+   - In SQL editor: `SELECT * FROM courses WHERE id = ?;` returns 0 rows.
+   - `SELECT * FROM submissions WHERE assignment_id IN (...);` returns 0.
+   - `SELECT * FROM auth.users WHERE id = '<test-student-id>';` returns 0.
+   - In Storage dashboard: course-files bucket has no files under
+     submissions/{id}/, returns/{id}/, or readings/{id}/.
+
+5. **Verify spare-user behavior**: Set up two courses, enroll the
+   same student in both, then delete one. The student's account
+   should still exist (because they're still in the other course).
+
+6. **Open the backup zip** and verify it contains:
+   - course.json
+   - assignments.json
+   - roster.csv
+   - pending_emails.csv
+   - submissions.csv (with one row per assignment+stage+student combo,
+     including blank rows for non-submitters)
+   - audit.json
+   - submissions/ folder (if you checked the box)
+   - returns/ folder (if you checked the box)

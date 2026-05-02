@@ -160,7 +160,7 @@ CREATE INDEX reading_files_course_idx ON public.reading_files (course_id);
 -- Updates and deletes are forbidden by RLS.
 CREATE TABLE public.audit_log (
   id           bigserial   PRIMARY KEY,
-  user_id      uuid        REFERENCES auth.users(id),
+  user_id       uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   action       text        NOT NULL,
   target_type  text,
   target_id    text,

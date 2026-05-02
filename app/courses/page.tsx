@@ -58,7 +58,15 @@ function groupCoursesByYear(courses: Course[]): AcademicYearGroup[] {
   return Array.from(map.values()).sort((a, b) => b.startYear - a.startYear)
 }
 
-export default async function CoursesPage() {
+export default async function CoursesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ deleted?: string; vaporized?: string }>
+}) {
+  const sp = await searchParams
+  const deletedTitle = sp.deleted
+  const vaporized = sp.vaporized ? parseInt(sp.vaporized, 10) : 0
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -96,7 +104,15 @@ export default async function CoursesPage() {
           </div>
           {isInstructor && (
             <div style={{ display: 'flex', gap: 10 }}>
-              <Link href="/templates" className="gl-btn-sm" style={{ background: 'transparent', color: 'var(--gl-mute)', borderColor: 'var(--gl-hairline)' }}>
+              <Link
+                href="/templates"
+                className="gl-btn-sm"
+                style={{
+                  background: 'transparent',
+                  color: 'var(--gl-mute)',
+                  borderColor: 'var(--gl-hairline)',
+                }}
+              >
                 Templates
               </Link>
               <Link href="/courses/new" className="gl-btn-sm">
@@ -105,6 +121,22 @@ export default async function CoursesPage() {
             </div>
           )}
         </div>
+
+        {deletedTitle && (
+          <div className="gl-banner" style={{ marginBottom: 24 }}>
+            <div style={{ flex: 1 }}>
+              <p className="gl-banner-title">
+                Course &ldquo;{deletedTitle}&rdquo; deleted.
+              </p>
+              {vaporized > 0 && (
+                <p className="gl-banner-body">
+                  {vaporized}{' '}
+                  {vaporized === 1 ? 'user account' : 'user accounts'} removed.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {activeGroups.length === 0 && archivedGroups.length === 0 && (
           <div className="gl-empty">

@@ -46,9 +46,60 @@ export default async function CourseSettingsPage({
     .single()
 
   const ay = academicYear(course.term, course.year)
-  const defaultTemplateName = ay
-    ? `${ay}-${course.title}`
-    : course.title
+  const defaultTemplateName = ay ? `${ay}-${course.title}` : course.title
+
+  // Counts for the delete confirmation panel.
+  const { data: assignmentRows } = await supabase
+    .from('assignments')
+    .select('id')
+    .eq('course_id', courseId)
+  const assignmentIds = (assignmentRows ?? []).map((a) => a.id)
+
+  const { count: submissionCount } =
+    assignmentIds.length > 0
+      ? await supabase
+          .from('submissions')
+          .select('id', { count: 'exact', head: true })
+          .in('assignment_id', assignmentIds)
+      : { count: 0 }
+
+  const { count: returnCount } =
+    assignmentIds.length > 0
+      ? await supabase
+          .from('submissions')
+          .select('id', { count: 'exact', head: true })
+          .in('assignment_id', assignmentIds)
+          .not('returned_storage_path', 'is', null)
+      : { count: 0 }
+
+  const { count: readingCount } = await supabase
+    .from('reading_files')
+    .select('id', { count: 'exact', head: true })
+    .eq('course_id', courseId)
+
+  const { data: memberships } = await supabase
+    .from('course_memberships')
+    .select('role')
+    .eq('course_id', courseId)
+  const studentCount = (memberships ?? []).filter((m) => m.role === 'student')
+    .length
+  const tutorCount = (memberships ?? []).filter((m) => m.role === 'tutor').length
+
+  const { count: pendingCount } = await supabase
+    .from('allowed_emails')
+    .select('id', { count: 'exact', head: true })
+    .eq('course_id', courseId)
+    .is('claimed_at', null)
+
+  const counts = {
+    assignments: assignmentIds.length,
+    submissions: submissionCount ?? 0,
+    returns: returnCount ?? 0,
+    readings: readingCount ?? 0,
+    students: studentCount,
+    tutors: tutorCount,
+    pending: pendingCount ?? 0,
+  }
 
   return (
     <main className="gl-page">
@@ -79,6 +130,7 @@ export default async function CourseSettingsPage({
           courseTitle={course.title}
           defaultTemplateName={defaultTemplateName}
           isArchived={!!course.archived_at}
+          counts={counts}
         />
 
         <GlobalFooter signedInAs={profile?.email ?? null} />
