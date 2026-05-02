@@ -389,7 +389,7 @@ function StudentStageBlock({
 }
 
 // ---------------------------------------------------------------------------
-// Staff view
+// Staff view (with bulk download / upload)
 // ---------------------------------------------------------------------------
 
 function StaffSubmissionsView({
@@ -429,7 +429,23 @@ function StaffSubmissionsView({
   )
 }
 
+type SkipEntry = {
+  filename: string
+  reason:
+    | 'no-code-suffix'
+    | 'unknown-code'
+    | 'not-in-course'
+    | 'no-submission'
+    | 'wrong-extension'
+    | 'too-large'
+    | 'empty'
+    | 'upload-failed'
+    | 'db-update-failed'
+  detail?: string
+}
+
 function StaffStageBlock({
+  assignmentId,
   stage,
   submissions,
   roster,
@@ -442,6 +458,7 @@ function StaffStageBlock({
   roster: RosterMember[]
   isInstructor: boolean
 }) {
+  const router = useRouter()
   const submittedIds = new Set(submissions.map((s) => s.user_id))
   const missing = roster.filter((r) => !submittedIds.has(r.user_id))
 
@@ -452,6 +469,14 @@ function StaffStageBlock({
 
   const [copyBanner, setCopyBanner] = useState<string | null>(null)
   const [copyError, setCopyError] = useState<string | null>(null)
+
+  const [showBulkUpload, setShowBulkUpload] = useState(false)
+  const [bulkFile, setBulkFile] = useState<File | null>(null)
+  const [bulkError, setBulkError] = useState<string | null>(null)
+  const [bulkResult, setBulkResult] = useState<
+    { returned: number; skipped: SkipEntry[] } | null
+  >(null)
+  const [pending, startTransition] = useTransition()
 
   async function copyMissing() {
     setCopyError(null)
@@ -466,6 +491,45 @@ function StaffStageBlock({
       )
     }
   }
+
+  function handleBulkUpload(e: React.FormEvent) {
+    e.preventDefault()
+    setBulkError(null)
+    setBulkResult(null)
+    if (!bulkFile) {
+      setBulkError('Choose a zip first.')
+      return
+    }
+    if (!bulkFile.name.toLowerCase().endsWith('.zip')) {
+      setBulkError('File must be a .zip.')
+      return
+    }
+
+    const fd = new FormData()
+    fd.set('assignment_id', String(assignmentId))
+    fd.set('stage_name', stage.name)
+    fd.set('file', bulkFile)
+
+    startTransition(async () => {
+      const res = await fetch('/api/returns/zip-upload', {
+        method: 'POST',
+        body: fd,
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setBulkError(data?.error ?? 'Upload failed.')
+        return
+      }
+      setBulkResult({
+        returned: data.returned ?? 0,
+        skipped: data.skipped ?? [],
+      })
+      setBulkFile(null)
+      router.refresh()
+    })
+  }
+
+  const downloadHref = `/api/submissions/zip/${assignmentId}/${encodeURIComponent(stage.name)}`
 
   return (
     <div style={{ marginBottom: 28 }}>
@@ -502,22 +566,42 @@ function StaffStageBlock({
               All {total} submitted ✓
             </p>
           ) : (
-            <>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--gl-mute)' }}>
-                {submittedCount} of {total} submitted
-                {stage.due_date &&
-                  ` · ${stageLate ? 'was ' : ''}due ${formatDateShort(stage.due_date + 'T00:00:00')}`}
-              </p>
-              {missing.length > 0 && (
-                <button
-                  type="button"
-                  className="gl-btn-ghost"
-                  onClick={copyMissing}
-                >
-                  Copy missing emails
-                </button>
-              )}
-            </>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--gl-mute)' }}>
+              {submittedCount} of {total} submitted
+              {stage.due_date &&
+                ` · ${stageLate ? 'was ' : ''}due ${formatDateShort(stage.due_date + 'T00:00:00')}`}
+            </p>
+          )}
+          {missing.length > 0 && (
+            <button
+              type="button"
+              className="gl-btn-ghost"
+              onClick={copyMissing}
+            >
+              Copy missing emails
+            </button>
+          )}
+          {submittedCount > 0 && (
+            <a
+              href={downloadHref}
+              className="gl-btn-ghost"
+              style={{ textDecoration: 'none' }}
+            >
+              Download all
+            </a>
+          )}
+          {isInstructor && submittedCount > 0 && (
+            <button
+              type="button"
+              className="gl-btn-ghost"
+              onClick={() => {
+                setShowBulkUpload((v) => !v)
+                setBulkResult(null)
+                setBulkError(null)
+              }}
+            >
+              {showBulkUpload ? 'Cancel upload' : 'Upload returns zip'}
+            </button>
           )}
         </div>
       </div>
@@ -558,6 +642,113 @@ function StaffStageBlock({
         </div>
       )}
 
+      {showBulkUpload && (
+        <div
+          style={{
+            padding: 14,
+            border: '1px solid var(--gl-hairline)',
+            marginBottom: 12,
+          }}
+        >
+          <p className="gl-label" style={{ marginBottom: 8 }}>
+            Upload returns zip
+          </p>
+          <p
+            style={{
+              margin: '0 0 12px',
+              fontSize: 12,
+              color: 'var(--gl-mute)',
+              lineHeight: 1.5,
+            }}
+          >
+            Mark up the files from "Download all" and re-zip them. Each file's
+            name must end with the student code (e.g.{' '}
+            <span
+              style={{
+                fontFamily:
+                  'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+              }}
+            >
+              ..._k7m3p.docx
+            </span>
+            ). Files without a recognizable code are skipped.
+          </p>
+          <form onSubmit={handleBulkUpload}>
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+              }}
+            >
+              <FilePicker
+                accept=".zip"
+                onChange={(f) => setBulkFile(f)}
+                selected={bulkFile}
+                disabled={pending}
+              />
+              <button
+                type="submit"
+                disabled={pending || !bulkFile}
+                className="gl-btn"
+                style={{ width: 'auto', padding: '8px 14px', flexShrink: 0 }}
+              >
+                {pending ? 'Distributing…' : 'Distribute returns'}
+              </button>
+            </div>
+            {bulkError && (
+              <div
+                className="gl-error"
+                style={{ marginTop: 10, fontSize: 13 }}
+                role="alert"
+              >
+                {bulkError}
+              </div>
+            )}
+          </form>
+        </div>
+      )}
+
+      {bulkResult && (
+        <div className="gl-banner" style={{ marginBottom: 12 }}>
+          <div style={{ flex: 1 }}>
+            <p className="gl-banner-title">
+              Returned to {bulkResult.returned}{' '}
+              {bulkResult.returned === 1 ? 'student' : 'students'}.
+            </p>
+            {bulkResult.skipped.length > 0 && (
+              <p className="gl-banner-body" style={{ fontSize: 12 }}>
+                Skipped {bulkResult.skipped.length}:{' '}
+                {bulkResult.skipped.slice(0, 5).map((s, i) => (
+                  <span key={i}>
+                    {i > 0 && ', '}
+                    <span
+                      style={{
+                        fontFamily:
+                          'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                      }}
+                    >
+                      {s.filename}
+                    </span>{' '}
+                    ({reasonLabel(s.reason)})
+                  </span>
+                ))}
+                {bulkResult.skipped.length > 5 &&
+                  ` and ${bulkResult.skipped.length - 5} more.`}
+              </p>
+            )}
+          </div>
+          <button
+            className="gl-banner-dismiss"
+            aria-label="Dismiss"
+            onClick={() => setBulkResult(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {roster.length === 0 ? (
         <p
           style={{
@@ -586,6 +777,29 @@ function StaffStageBlock({
       )}
     </div>
   )
+}
+
+function reasonLabel(r: SkipEntry['reason']): string {
+  switch (r) {
+    case 'no-code-suffix':
+      return 'no code in filename'
+    case 'unknown-code':
+      return 'code not recognized'
+    case 'not-in-course':
+      return 'not in course'
+    case 'no-submission':
+      return 'student has no submission'
+    case 'wrong-extension':
+      return 'wrong file type'
+    case 'too-large':
+      return 'too large'
+    case 'empty':
+      return 'empty file'
+    case 'upload-failed':
+      return 'upload failed'
+    case 'db-update-failed':
+      return 'database error'
+  }
 }
 
 function StaffStudentRow({
@@ -632,8 +846,7 @@ function StaffStudentRow({
 
   const submittedDate = new Date(submission.submitted_at)
   const isLate =
-    stageDueDate &&
-    submittedDate > new Date(stageDueDate + 'T23:59:59')
+    stageDueDate && submittedDate > new Date(stageDueDate + 'T23:59:59')
 
   function handleReturnUpload(e: React.FormEvent) {
     e.preventDefault()
@@ -726,7 +939,6 @@ function StaffStudentRow({
         </a>
       </div>
 
-      {/* Returns sub-row — only for instructor (tutors are read-only) */}
       {isInstructor && (
         <div style={{ marginTop: 8 }}>
           {submission.returned_filename ? (
@@ -791,7 +1003,10 @@ function StaffStudentRow({
           )}
 
           {showUpload && (
-            <form onSubmit={handleReturnUpload} style={{ marginTop: 10, paddingLeft: 16 }}>
+            <form
+              onSubmit={handleReturnUpload}
+              style={{ marginTop: 10, paddingLeft: 16 }}
+            >
               <div
                 style={{
                   display: 'flex',
@@ -834,7 +1049,6 @@ function StaffStudentRow({
         </div>
       )}
 
-      {/* Tutors see returns read-only when present, no upload UI */}
       {!isInstructor && submission.returned_filename && (
         <div
           style={{
