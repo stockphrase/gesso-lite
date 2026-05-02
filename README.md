@@ -1,32 +1,63 @@
-# Step 9 — Patch: MIME type fix for bulk return upload
+# Step 10 — Readings
 
-The bulk upload was failing silently with "student has no submission"
-when the real error was that Supabase Storage rejected the upload —
-files extracted from a zip have no MIME type by default, and the bucket
-only accepts the three Word/ODT MIME types we listed.
+Course readings: instructor uploads PDFs (single or zip-of-PDFs);
+all course members can download individually or as a bulk zip.
 
-## Files (2 total)
+## Files (7 total)
+
+New:
+- supabase/migrations/0007_storage_readings.sql
+    Adds RLS policies for the `readings/` storage prefix and adds
+    `application/pdf` to the bucket's `allowed_mime_types`.
+- app/api/readings/upload/route.ts
+    POST. Accepts a single .pdf or a .zip of PDFs. Saves each file to
+    `readings/{courseId}/{filename}` and upserts the matching row in
+    `reading_files` (overwrites by filename).
+- app/api/readings/download/[id]/route.ts
+    GET. Signed URL for one reading.
+- app/api/readings/zip/[courseId]/route.ts
+    GET. Streams a zip of all readings for the course.
+- app/api/readings/delete/[id]/route.ts
+    POST. Instructor deletes a reading (storage object + db row).
+- app/courses/[id]/ReadingsClient.tsx
+    Interactive readings UI. Instructor sees upload form + per-row
+    Delete button; everyone gets per-row Download + bulk "Download all".
 
 Replaces:
-- app/api/returns/zip-upload/route.ts
-    Sets the correct `application/...` MIME type per file extension
-    when uploading. Adds `upload-failed` and `db-update-failed` skip
-    reasons so client errors are no longer reported as
-    "no-submission".
-
-- app/courses/[id]/assignments/[assignmentId]/SubmissionsClient.tsx
-    Updates the `SkipEntry` type and `reasonLabel` function to know
-    about the two new skip reasons.
+- app/courses/[id]/page.tsx
+    Fetches readings, uses ReadingsClient instead of the placeholder.
 
 ## Apply
 
-    unzip /path/to/gesso-lite-step9p.zip -d .
+1. Unzip into the repo root:
+       unzip /path/to/gesso-lite-step10.zip -d .
 
-No database changes. Hot reload picks up the file changes.
+2. Run the migration in the Supabase SQL editor:
+       supabase/migrations/0007_storage_readings.sql
+
+3. Verify the bucket now allows PDFs:
+       SELECT id, allowed_mime_types FROM storage.buckets
+       WHERE id = 'course-files';
+   Should include `application/pdf`.
+
+4. Verify the readings policies exist:
+       SELECT policyname FROM pg_policies
+       WHERE tablename = 'objects' AND schemaname = 'storage'
+         AND policyname LIKE 'readings%';
+   Should show four readings policies.
 
 ## Test
 
-Re-upload the same zip you tried before. Banner should now say
-"Returned to N students" with no skips. Refresh the assignment page;
-the orange RETURNED tag should appear on each student's row with the
-filename from the zip.
+As instructor, on a course home page:
+- Upload a single PDF. The file appears in the list with size and date.
+- Upload a zip with 3 PDFs and 1 .txt. Banner says "Uploaded 3 files.
+  Skipped 1: notes.txt (not a PDF)."
+- Re-upload the same PDF (same filename). Should overwrite, not duplicate.
+- Click Download on a row — file downloads.
+- Click "Download all" — get a zip with all readings.
+- Click Delete on a row — confirms, removes from list.
+
+As student (incognito):
+- Same course home shows the readings list with Download buttons but no
+  Upload form and no Delete buttons.
+- Per-row Download and bulk "Download all" both work.

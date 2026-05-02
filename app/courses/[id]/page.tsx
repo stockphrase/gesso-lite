@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import GlobalFooter from '@/app/_components/GlobalFooter'
+import ReadingsClient from './ReadingsClient'
 
 type Stage = { name: string; due_date: string | null }
 type Assignment = {
@@ -76,6 +77,13 @@ export default async function CourseHomePage({
   const assignments = ((assignmentRows ?? []) as Assignment[]).sort((a, b) =>
     earliestUpcoming(a).localeCompare(earliestUpcoming(b))
   )
+
+  const { data: readingRows } = await supabase
+    .from('reading_files')
+    .select('id, filename, size_bytes, uploaded_at')
+    .eq('course_id', courseId)
+    .order('uploaded_at', { ascending: false })
+  const readings = readingRows ?? []
 
   const academicYear =
     course.year && course.term
@@ -180,12 +188,11 @@ export default async function CourseHomePage({
           )}
         </div>
 
-        <div className="gl-section">
-          <h2 className="gl-h2">Readings</h2>
-          <div className="gl-empty">
-            Course readings will appear here in Step 10.
-          </div>
-        </div>
+        <ReadingsClient
+          courseId={course.id}
+          readings={readings}
+          isInstructor={isInstructor}
+        />
 
         {isInstructor && (
           <div className="gl-section">
