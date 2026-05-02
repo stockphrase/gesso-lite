@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createAssignment } from './actions'
+import GlobalFooter from '@/app/_components/GlobalFooter'
 
 type StageDraft = { id: string; name: string; dueDate: string }
 
@@ -25,14 +26,20 @@ export default function NewAssignmentPage() {
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [courseTitle, setCourseTitle] = useState<string>('')
+  const [signedInAs, setSignedInAs] = useState<string | null>(null)
 
-  // Best-effort fetch of the course title for the breadcrumb. Failure is OK.
   useEffect(() => {
     if (!Number.isFinite(courseId)) return
     fetch(`/api/courses/${courseId}/title`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.title) setCourseTitle(data.title)
+      })
+      .catch(() => {})
+    fetch('/api/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.email) setSignedInAs(data.email)
       })
       .catch(() => {})
   }, [courseId])
@@ -224,6 +231,8 @@ export default function NewAssignmentPage() {
             {pending ? 'Creating…' : 'Create assignment'}
           </button>
         </form>
+
+        <GlobalFooter signedInAs={signedInAs} />
       </div>
     </main>
   )

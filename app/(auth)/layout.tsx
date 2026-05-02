@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import ThemeToggle from '@/app/_components/ThemeToggle'
 
 export default function AuthLayout({
   children,
@@ -35,6 +36,15 @@ export default function AuthLayout({
           }}
         >
           {children}
+        </div>
+        <div
+          style={{
+            marginTop: 20,
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <ThemeToggle />
         </div>
       </div>
     </main>

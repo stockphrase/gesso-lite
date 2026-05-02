@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import SubmissionsClient from './SubmissionsClient'
+import GlobalFooter from '@/app/_components/GlobalFooter'
 
 type Stage = { name: string; due_date: string | null }
 
@@ -46,9 +48,79 @@ export default async function AssignmentDetailPage({
 
   if (!assignment) notFound()
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email, role')
+    .eq('id', user.id)
+    .single()
+
+  const isInstructor =
+    profile?.role === 'instructor' && course.created_by === user.id
+
+  const { data: isTutorRaw } = await supabase.rpc('is_tutor_in_course', {
+    check_course_id: courseId,
+  })
+  const isTutor = !!isTutorRaw
+
+  const isStaff = isInstructor || isTutor
+
   const stages = (assignment.stages ?? []) as Stage[]
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+
+  let submissions: Array<{
+    id: number
+    user_id: string
+    stage_name: string
+    filename: string
+    submitted_at: string
+  }> = []
+
+  if (isStaff) {
+    const { data } = await supabase
+      .from('submissions')
+      .select('id, user_id, stage_name, filename, submitted_at')
+      .eq('assignment_id', assignmentId)
+    submissions = data ?? []
+  } else {
+    const { data } = await supabase
+      .from('submissions')
+      .select('id, user_id, stage_name, filename, submitted_at')
+      .eq('assignment_id', assignmentId)
+      .eq('user_id', user.id)
+    submissions = data ?? []
+  }
+
+  let roster: Array<{ user_id: string; name: string | null; email: string }> =
+    []
+  if (isStaff) {
+    const { data: memberships } = await supabase
+      .from('course_memberships')
+      .select('user_id, role')
+      .eq('course_id', courseId)
+      .eq('role', 'student')
+
+    const userIds = (memberships ?? []).map((m) => m.user_id)
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .in('id', userIds)
+      const profById = new Map(
+        (profiles ?? []).map((p) => [p.id, p] as const)
+      )
+      roster = (memberships ?? [])
+        .map((m) => {
+          const p = profById.get(m.user_id)
+          return {
+            user_id: m.user_id,
+            name: p?.name ?? null,
+            email: p?.email ?? '(unknown)',
+          }
+        })
+        .sort((a, b) =>
+          (a.name ?? a.email).localeCompare(b.name ?? b.email)
+        )
+    }
+  }
 
   return (
     <main className="gl-page">
@@ -95,44 +167,39 @@ export default async function AssignmentDetailPage({
           {stages.length === 0 ? (
             <div className="gl-empty">No stages defined.</div>
           ) : (
-            stages.map((s, idx) => {
-              const past = s.due_date
-                ? new Date(s.due_date + 'T00:00:00') < today
-                : false
-              return (
-                <div
-                  key={`${idx}-${s.name}`}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    padding: '12px 0',
-                    borderBottom: '1px solid var(--gl-hairline)',
-                  }}
-                >
-                  <span style={{ fontSize: 16 }}>{s.name}</span>
-                  <span
-                    className="gl-assignment-meta"
-                    style={{
-                      color: past ? 'var(--gl-mute)' : 'var(--gl-mute)',
-                    }}
-                  >
-                    {s.due_date
-                      ? `Due ${formatDate(s.due_date)}`
-                      : 'No due date'}
-                  </span>
-                </div>
-              )
-            })
+            stages.map((s, idx) => (
+              <div
+                key={`${idx}-${s.name}`}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  padding: '12px 0',
+                  borderBottom: '1px solid var(--gl-hairline)',
+                }}
+              >
+                <span style={{ fontSize: 16 }}>{s.name}</span>
+                <span className="gl-assignment-meta">
+                  {s.due_date
+                    ? `Due ${formatDate(s.due_date)}`
+                    : 'No due date'}
+                </span>
+              </div>
+            ))
           )}
         </div>
 
-        <div className="gl-section">
-          <h2 className="gl-h2">Submissions</h2>
-          <div className="gl-empty">
-            Submission upload will appear here in Step 7.
-          </div>
-        </div>
+        <SubmissionsClient
+          courseId={courseId}
+          assignmentId={assignmentId}
+          stages={stages}
+          submissions={submissions}
+          roster={roster}
+          isStaff={isStaff}
+          currentUserId={user.id}
+        />
+
+        <GlobalFooter signedInAs={profile?.email ?? null} />
       </div>
     </main>
   )

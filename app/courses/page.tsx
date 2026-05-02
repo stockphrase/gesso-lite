@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import ThemeToggle from '@/app/_components/ThemeToggle'
+import GlobalFooter from '@/app/_components/GlobalFooter'
 
 type Course = {
   id: number
@@ -176,29 +176,7 @@ export default async function CoursesPage() {
           </div>
         )}
 
-        <div className="gl-footer">
-          <span>Signed in as {profile?.email}</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <ThemeToggle />
-            <form action="/api/auth/signout" method="POST">
-              <button
-                type="submit"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--gl-mute)',
-                  cursor: 'pointer',
-                  font: 'inherit',
-                  fontSize: 13,
-                  padding: 0,
-                  borderBottom: '1px solid var(--gl-hairline)',
-                }}
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
-        </div>
+        <GlobalFooter signedInAs={profile?.email ?? null} />
       </div>
     </main>
   )

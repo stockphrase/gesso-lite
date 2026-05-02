@@ -1,16 +1,25 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useTransition, useEffect } from 'react'
 import Link from 'next/link'
 import { createCourse } from './actions'
+import GlobalFooter from '@/app/_components/GlobalFooter'
 
 export default function NewCoursePage() {
-  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [signedInAs, setSignedInAs] = useState<string | null>(null)
 
   const currentYear = new Date().getFullYear()
+
+  useEffect(() => {
+    fetch('/api/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.email) setSignedInAs(data.email)
+      })
+      .catch(() => {})
+  }, [])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -22,7 +31,6 @@ export default function NewCoursePage() {
       if (result?.error) {
         setError(result.error)
       }
-      // success path triggers a server redirect, so nothing else to do here
     })
   }
 
@@ -125,6 +133,8 @@ export default function NewCoursePage() {
             Back to courses
           </Link>
         </p>
+
+        <GlobalFooter signedInAs={signedInAs} />
       </div>
     </main>
   )

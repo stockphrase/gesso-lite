@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import GlobalFooter from '@/app/_components/GlobalFooter'
 
 type Stage = { name: string; due_date: string | null }
 type Assignment = {
@@ -31,7 +32,6 @@ function nextUpcomingStage(
 }
 
 function earliestUpcoming(assignment: Assignment): string {
-  // Returns an ISO date or '9999-99-99' for fully complete (so they sort to the bottom).
   const next = nextUpcomingStage(assignment)
   return next?.due_date ?? '9999-99-99'
 }
@@ -61,7 +61,7 @@ export default async function CourseHomePage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('email, role')
     .eq('id', user.id)
     .single()
 
@@ -224,6 +224,8 @@ export default async function CourseHomePage({
             </p>
           </div>
         )}
+
+        <GlobalFooter signedInAs={profile?.email ?? null} />
       </div>
     </main>
   )

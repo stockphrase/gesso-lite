@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import RosterClient from './RosterClient'
+import GlobalFooter from '@/app/_components/GlobalFooter'
 
 export default async function RosterPage({
   params,
@@ -29,7 +30,12 @@ export default async function RosterPage({
     redirect(`/courses/${courseId}`)
   }
 
-  // Pending: allowed_emails rows with claimed_at IS NULL
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', user.id)
+    .single()
+
   const { data: pendingRows } = await supabase
     .from('allowed_emails')
     .select('id, email, role')
@@ -37,15 +43,11 @@ export default async function RosterPage({
     .is('claimed_at', null)
     .order('email', { ascending: true })
 
-  // Members: course_memberships rows for this course
   const { data: membershipRows } = await supabase
     .from('course_memberships')
     .select('user_id, role')
     .eq('course_id', courseId)
 
-  // Profiles: fetched separately for the user_ids above. Doing this as a
-  // second query (rather than a join) avoids a PostgREST/RLS interaction
-  // that was causing joined rows to drop.
   const userIds = (membershipRows ?? []).map((m) => m.user_id)
   const { data: profileRows } =
     userIds.length > 0
@@ -55,7 +57,7 @@ export default async function RosterPage({
           .in('id', userIds)
       : { data: [] }
 
-type ProfileRow = { id: string; name: string | null; email: string }
+  type ProfileRow = { id: string; name: string | null; email: string }
   const profilesById: Map<string, ProfileRow> = new Map()
   for (const p of profileRows ?? []) {
     profilesById.set(p.id, p)
@@ -67,8 +69,6 @@ type ProfileRow = { id: string; name: string | null; email: string }
   const members = memberships
     .map((m) => {
       const p = profilesById.get(m.user_id)
-      // If the profile somehow can't be read, fall back to a placeholder
-      // so the row still appears (the instructor can investigate).
       return {
         user_id: m.user_id,
         role: m.role,
@@ -131,6 +131,8 @@ type ProfileRow = { id: string; name: string | null; email: string }
           }))}
           tutorPending={tutorPending}
         />
+
+        <GlobalFooter signedInAs={profile?.email ?? null} />
       </div>
     </main>
   )
