@@ -1,65 +1,61 @@
-# Step 13a — Edit assignment
+# Step 13b — Password reset flow
 
-First piece of Step 13 polish. Adds the ability to edit assignment
-title, description, stage names, stage dates; reorder stages; add
-new stages; remove unused stages; and delete the entire assignment
-when no submissions exist.
+Adds the missing `/account/update-password` page that students land on
+after clicking a password-reset link in their email.
 
-This was a real gap — assignments created from a template had no due
-dates and no way to add them.
-
-## Files (3 total)
+## Files (1 total)
 
 New:
-- app/courses/[id]/assignments/[assignmentId]/edit/page.tsx
-    Edit assignment page (server component).
-- app/courses/[id]/assignments/[assignmentId]/edit/EditAssignmentClient.tsx
-    Client component with stage reordering (↑/↓), rename, add, remove.
-- app/courses/[id]/assignments/[assignmentId]/edit/actions.ts
-    Server actions: updateAssignment and deleteAssignment.
+- app/(auth)/account/update-password/page.tsx
+    Reads the session set by Supabase after the reset-link redirect,
+    presents a form to set a new password, applies it via
+    supabase.auth.updateUser({ password }), then redirects to /courses.
 
-Replaces:
-- app/courses/[id]/assignments/[assignmentId]/page.tsx
-    Adds the "Edit" button in the page header (instructor-only).
-
-## Behavior
-
-When you save changes:
-- Title and description update directly.
-- Stage rename: existing submissions for that stage are atomically
-  renamed too, so they stay associated with the (renamed) stage.
-- Stage delete: refused if any submissions exist for that stage.
-  Error message tells the user to either rename it or remove the
-  submissions first.
-- Stage add and reorder: applied directly, no implications for
-  existing submissions.
-
-Delete assignment: only allowed if zero submissions exist. Error
-message guides the user otherwise.
+The reset-password REQUEST page (where users enter their email and
+trigger the reset email) already exists at app/(auth)/reset-password
+from Step 3. Its `redirectTo` already points to
+`/auth/callback?next=/account/update-password`, which is what the
+auth callback at app/auth/callback/route.ts handles.
 
 ## Apply
 
-    unzip /path/to/gesso-lite-step13a.zip -d .
+    unzip /path/to/gesso-lite-step13b.zip -d .
 
-No database migration. Hot reload picks up the changes.
+If you already have an `app/(auth)/account/update-password/page.tsx`
+in your repo, this overwrites it with the more robust version that
+handles the auth-state listener.
+
+No database migration. No Supabase config changes needed.
+
+## Supabase URL configuration
+
+For the email link to work in production, you'll need to add your
+production URL to Supabase's allow list. For local dev, ensure your
+Site URL or Redirect URLs include http://localhost:3000.
+
+Dashboard: Authentication → URL Configuration:
+- Site URL: http://localhost:3000 (for dev)
+- Redirect URLs: add http://localhost:3000/** if not already there
+
+When you deploy (Step 14), add your production URL to both fields.
 
 ## Test
 
-1. Open a course, click an assignment that was created from a template
-   (with no due dates).
-2. Click the "Edit" button in the page header.
-3. Type dates into the Due date fields. Click "Save changes".
-4. Page returns to the assignment detail page; stages now show their
-   due dates.
-5. Click Edit again. Try:
-   - Rename the title → save → verify
-   - Add a new stage → save → verify
-   - Use ↑/↓ arrows to reorder → save → verify
-   - Delete a stage that has no submissions → save → verify
-   - Try to delete a stage that DOES have submissions → expect error
-     with guidance
-   - Rename a stage that has submissions → save → submissions still
-     visible under the new name
-6. Try to delete an assignment that has submissions: expect error.
-   Try to delete an assignment with no submissions: succeeds, returns
-   to course home.
+1. Go to /login → click "Forgot password?".
+2. Enter your email (mail@no-silo.com) → click "Send reset link".
+3. See the "Check your email" message.
+4. Open the email Supabase sent (might be in your project's Auth →
+   Email Templates section, or the actual email if you have SMTP set up).
+5. Click the link in the email. It goes to the Supabase auth domain,
+   which redirects through /auth/callback?code=… and lands on
+   /account/update-password.
+6. Enter a new password (≥8 chars), confirm it, click "Update password".
+7. Should see "Password updated" briefly, then redirect to /courses.
+8. Sign out. Sign in with the new password. Should work.
+
+## If the link doesn't work locally
+
+For local dev, Supabase needs to know your dev URL. Check
+Authentication → URL Configuration. Site URL should be
+http://localhost:3000. If it's something else (like a Vercel preview
+URL), update it for now and we'll switch back at deployment.

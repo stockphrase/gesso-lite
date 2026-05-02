@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -12,11 +12,46 @@ export default function UpdatePasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [hasSession, setHasSession] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    const supabase = createClient()
+
+    // Some flows: the auth callback already exchanged the code for a session
+    // and redirected here. The session is set; we can update the password.
+    // Other flows (PKCE/magic-link variants): Supabase fires PASSWORD_RECOVERY
+    // when the page loads and sets the session at that point.
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!alive) return
+      if (event === 'PASSWORD_RECOVERY' || session?.user) {
+        setHasSession(true)
+      }
+    })
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return
+      if (data.session) setHasSession(true)
+      else setHasSession((prev) => (prev === null ? false : prev))
+    })
+
+    return () => {
+      alive = false
+      subscription.unsubscribe()
+    }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
 
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
     if (password !== confirmPassword) {
       setError('Passwords do not match.')
       return
@@ -37,7 +72,7 @@ export default function UpdatePasswordPage() {
     setTimeout(() => {
       router.push('/courses')
       router.refresh()
-    }, 1200)
+    }, 1500)
   }
 
   if (done) {
@@ -61,7 +96,40 @@ export default function UpdatePasswordPage() {
             lineHeight: 1.6,
           }}
         >
-          Redirecting…
+          You&rsquo;re signed in. Redirecting to your courses…
+        </p>
+      </>
+    )
+  }
+
+  if (hasSession === false) {
+    return (
+      <>
+        <h1
+          style={{
+            fontSize: 22,
+            fontWeight: 500,
+            margin: '0 0 12px',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          Reset link expired
+        </h1>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--gl-mute)',
+            margin: '0 0 24px',
+            lineHeight: 1.6,
+          }}
+        >
+          This page is only valid when reached from a password-reset email
+          link. The link may have expired or already been used.
+        </p>
+        <p style={{ fontSize: 13, margin: 0 }}>
+          <Link href="/reset-password" className="gl-link">
+            Request a new reset link →
+          </Link>
         </p>
       </>
     )
@@ -94,6 +162,7 @@ export default function UpdatePasswordPage() {
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoFocus
           />
           <p
             style={{
