@@ -17,8 +17,6 @@ export const metadata: Metadata = {
   description: "Course management for writing instructors",
 };
 
-// Runs before the page renders to prevent flash-of-wrong-theme.
-// Reads localStorage and applies data-theme to <html> synchronously.
 const themeInitScript = `
 (function() {
   try {
@@ -39,6 +37,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />

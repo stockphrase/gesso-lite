@@ -66,24 +66,31 @@ export default async function AssignmentDetailPage({
 
   const stages = (assignment.stages ?? []) as Stage[]
 
+  // Now selecting returned_* columns too.
   let submissions: Array<{
     id: number
     user_id: string
     stage_name: string
     filename: string
     submitted_at: string
+    returned_filename: string | null
+    returned_at: string | null
   }> = []
 
   if (isStaff) {
     const { data } = await supabase
       .from('submissions')
-      .select('id, user_id, stage_name, filename, submitted_at')
+      .select(
+        'id, user_id, stage_name, filename, submitted_at, returned_filename, returned_at'
+      )
       .eq('assignment_id', assignmentId)
     submissions = data ?? []
   } else {
     const { data } = await supabase
       .from('submissions')
-      .select('id, user_id, stage_name, filename, submitted_at')
+      .select(
+        'id, user_id, stage_name, filename, submitted_at, returned_filename, returned_at'
+      )
       .eq('assignment_id', assignmentId)
       .eq('user_id', user.id)
     submissions = data ?? []
@@ -196,6 +203,7 @@ export default async function AssignmentDetailPage({
           submissions={submissions}
           roster={roster}
           isStaff={isStaff}
+          isInstructor={isInstructor}
           currentUserId={user.id}
         />
 

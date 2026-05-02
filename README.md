@@ -1,60 +1,72 @@
-# Step 7.5 — Patch: file picker + global theme toggle
+# Step 8 — Returns + Student Codes
 
-Two fixes:
-1. The native file input "Browse" button is replaced with a styled FilePicker
-   component that matches Gesso's aesthetic in both light and dark mode.
-2. The theme toggle now appears on every authenticated page (via a shared
-   GlobalFooter) and on the auth pages (login / register / reset-password /
-   update-password) below the form.
+Two things in this batch:
 
-## Files (10 total)
+1. **Per-student return upload.** Instructor uploads a marked-up file for
+   any student's submission; student sees the orange "RETURNED" indicator
+   and can download.
+
+2. **Student codes.** A 5-character unique code on every profile, used
+   later by Step 9's bulk download/upload to safely match marked-up files
+   back to the right student.
+
+## Files (5 total)
 
 New:
-- app/_components/FilePicker.tsx
-    Styled wrapper around a hidden native file input. "Choose file" button
-    + filename label, theme-aware.
-- app/_components/GlobalFooter.tsx
-    Shared footer used by every page with a `gl-shell`. Shows signed-in
-    email, theme toggle, and sign-out button.
-- app/api/me/route.ts
-    Small endpoint returning the current user's email/name/role. Used by
-    client-component pages that don't already have access to the profile
-    in a server component.
+- supabase/migrations/0005_student_code.sql
+    Adds `profiles.student_code`, a generator function, updates
+    `handle_new_user`, and backfills existing profiles.
+- supabase/migrations/0006_storage_returns.sql
+    Storage RLS policies for the `returns/` path prefix in the
+    `course-files` bucket.
+- app/api/submissions/return/route.ts
+    POST — instructor uploads a return for one submission.
+- app/api/submissions/return/download/[id]/route.ts
+    GET — signed URL for the return file (60 seconds).
 
 Replaces (overwrite existing):
-- app/(auth)/layout.tsx
-    Adds a centered ThemeToggle below the auth card.
-- app/courses/page.tsx
-    Uses GlobalFooter.
-- app/courses/[id]/page.tsx
-    Uses GlobalFooter.
-- app/courses/[id]/roster/page.tsx
-    Uses GlobalFooter.
-- app/courses/new/page.tsx
-    Uses GlobalFooter (fetches /api/me for signed-in email).
-- app/courses/[id]/assignments/new/page.tsx
-    Uses GlobalFooter.
 - app/courses/[id]/assignments/[assignmentId]/page.tsx
-    Uses GlobalFooter.
+    Now selects `returned_*` columns; passes `isInstructor` to the client.
 - app/courses/[id]/assignments/[assignmentId]/SubmissionsClient.tsx
-    Uses FilePicker for the upload form.
+    Renders the return UI for both student and staff views.
 
-No database changes.
+## Apply order
 
-## Apply
+1. Unzip into the repo root:
+       unzip /path/to/gesso-lite-step8.zip -d .
 
-    unzip /path/to/gesso-lite-step7p.zip -d .
+2. Run the two migrations in order in the Supabase SQL editor:
+       supabase/migrations/0005_student_code.sql
+       supabase/migrations/0006_storage_returns.sql
 
-Hot reload should pick everything up. If anything's stuck, restart
-`npm run dev`.
+3. Verify student codes:
+       SELECT email, student_code FROM public.profiles ORDER BY created_at;
+   Every row should have a 5-character code.
+
+4. Verify returns policies exist:
+       SELECT policyname FROM pg_policies
+       WHERE tablename = 'objects' AND schemaname = 'storage'
+         AND policyname LIKE 'returns%';
+   You should see four returns policies.
+
+5. Hot reload picks up the page/component changes; no dev server restart
+   needed unless something's stuck.
 
 ## Test
 
-- Sign in. Bottom of every page should now have: "Signed in as ...", a
-  three-state Light/Auto/Dark toggle, and a Sign out button.
-- The toggle on any page changes the theme everywhere immediately.
-- Sign out. The login / register / reset-password pages should each have
-  the theme toggle below the card.
-- On an assignment page as a student, the upload form's "Choose file"
-  button should match the rest of the styling — gray ghost button with
-  a filename label next to it. Try it in both light and dark mode.
+As instructor:
+- Open an assignment where a student has submitted. Each student row now
+  shows a sub-row "+ Upload return" beneath it.
+- Click "+ Upload return" — file picker appears inline.
+- Choose a `.docx`, click "Upload return". Page refreshes; that student's
+  row now shows the orange RETURNED tag with the filename and a "Replace
+  return" button.
+
+As student (incognito window):
+- Open the same assignment. Your stage block now shows a second indented
+  row with the orange RETURNED tag and a Download button.
+- Click Download — the marked-up file downloads.
+
+For stages where you've submitted but the instructor hasn't returned anything:
+- A small muted line "Awaiting response from instructor." appears in place
+  of the return row.

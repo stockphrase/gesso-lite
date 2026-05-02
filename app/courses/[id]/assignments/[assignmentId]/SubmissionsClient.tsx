@@ -12,6 +12,8 @@ type Submission = {
   stage_name: string
   filename: string
   submitted_at: string
+  returned_filename: string | null
+  returned_at: string | null
 }
 
 type RosterMember = {
@@ -44,6 +46,17 @@ function isPastDueDate(due_date: string | null): boolean {
   return new Date(due_date + 'T00:00:00') < today
 }
 
+function validateFile(f: File): string | null {
+  const lower = f.name.toLowerCase()
+  if (!ALLOWED_EXTENSIONS.some((ext) => lower.endsWith(ext))) {
+    return 'File must be .doc, .docx, or .odt.'
+  }
+  if (f.size > MAX_BYTES) {
+    return 'File must be 10 MB or smaller.'
+  }
+  return null
+}
+
 export default function SubmissionsClient({
   courseId,
   assignmentId,
@@ -51,6 +64,7 @@ export default function SubmissionsClient({
   submissions,
   roster,
   isStaff,
+  isInstructor,
   currentUserId,
 }: {
   courseId: number
@@ -59,6 +73,7 @@ export default function SubmissionsClient({
   submissions: Submission[]
   roster: RosterMember[]
   isStaff: boolean
+  isInstructor: boolean
   currentUserId: string
 }) {
   if (isStaff) {
@@ -69,6 +84,7 @@ export default function SubmissionsClient({
         stages={stages}
         submissions={submissions}
         roster={roster}
+        isInstructor={isInstructor}
       />
     )
   }
@@ -140,17 +156,6 @@ function StudentStageBlock({
 
   const isLate = isPastDueDate(stage.due_date) && !existing
 
-  function validate(f: File): string | null {
-    const lower = f.name.toLowerCase()
-    if (!ALLOWED_EXTENSIONS.some((ext) => lower.endsWith(ext))) {
-      return 'File must be .doc, .docx, or .odt.'
-    }
-    if (f.size > MAX_BYTES) {
-      return 'File must be 10 MB or smaller.'
-    }
-    return null
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -158,7 +163,7 @@ function StudentStageBlock({
       setError('Choose a file first.')
       return
     }
-    const v = validate(file)
+    const v = validateFile(file)
     if (v) {
       setError(v)
       return
@@ -187,13 +192,18 @@ function StudentStageBlock({
   }
 
   return (
-    <div style={{ padding: '14px 0', borderBottom: '0.5px solid var(--gl-hairline)' }}>
+    <div
+      style={{
+        padding: '14px 0',
+        borderBottom: '0.5px solid var(--gl-hairline)',
+      }}
+    >
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'baseline',
-          marginBottom: existing && !showReplace ? 6 : 12,
+          marginBottom: existing && !showReplace ? 10 : 12,
           gap: 12,
           flexWrap: 'wrap',
         }}
@@ -226,33 +236,96 @@ function StudentStageBlock({
       </div>
 
       {existing && !showReplace ? (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <p
+        <>
+          <div
             style={{
-              margin: 0,
-              fontSize: 13,
-              color: 'var(--gl-mute)',
-              fontFamily:
-                'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 12,
+              padding: '8px 0',
             }}
           >
-            {existing.filename}
-          </p>
-          <button
-            type="button"
-            className="gl-btn-ghost"
-            onClick={() => setShowReplace(true)}
-          >
-            Replace file
-          </button>
-        </div>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 13,
+                color: 'var(--gl-mute)',
+                fontFamily:
+                  'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+              }}
+            >
+              {existing.filename}
+            </p>
+            <button
+              type="button"
+              className="gl-btn-ghost"
+              onClick={() => setShowReplace(true)}
+            >
+              Replace file
+            </button>
+          </div>
+
+          {existing.returned_filename ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                padding: '8px 0',
+                paddingLeft: 16,
+                borderLeft: '2px solid var(--gl-accent)',
+                marginTop: 4,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  minWidth: 0,
+                }}
+              >
+                <span className="gl-pending-tag" style={{ flexShrink: 0 }}>
+                  Returned
+                </span>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    color: 'var(--gl-mute)',
+                    fontFamily:
+                      'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {existing.returned_filename}
+                </p>
+              </div>
+              <a
+                href={`/api/submissions/return/download/${existing.id}`}
+                className="gl-btn-ghost"
+                style={{ textDecoration: 'none', flexShrink: 0 }}
+              >
+                Download
+              </a>
+            </div>
+          ) : (
+            <p
+              style={{
+                fontSize: 12,
+                color: 'var(--gl-mute)',
+                margin: '8px 0 0',
+                paddingLeft: 16,
+              }}
+            >
+              Awaiting response from instructor.
+            </p>
+          )}
+        </>
       ) : (
         <form onSubmit={handleSubmit}>
           <div
@@ -316,7 +389,7 @@ function StudentStageBlock({
 }
 
 // ---------------------------------------------------------------------------
-// Staff view (instructor / tutor)
+// Staff view
 // ---------------------------------------------------------------------------
 
 function StaffSubmissionsView({
@@ -325,12 +398,14 @@ function StaffSubmissionsView({
   stages,
   submissions,
   roster,
+  isInstructor,
 }: {
   courseId: number
   assignmentId: number
   stages: Stage[]
   submissions: Submission[]
   roster: RosterMember[]
+  isInstructor: boolean
 }) {
   return (
     <div className="gl-section">
@@ -346,6 +421,7 @@ function StaffSubmissionsView({
             stage={stage}
             submissions={submissions.filter((s) => s.stage_name === stage.name)}
             roster={roster}
+            isInstructor={isInstructor}
           />
         ))
       )}
@@ -357,12 +433,14 @@ function StaffStageBlock({
   stage,
   submissions,
   roster,
+  isInstructor,
 }: {
   courseId: number
   assignmentId: number
   stage: Stage
   submissions: Submission[]
   roster: RosterMember[]
+  isInstructor: boolean
 }) {
   const submittedIds = new Set(submissions.map((s) => s.user_id))
   const missing = roster.filter((r) => !submittedIds.has(r.user_id))
@@ -427,7 +505,8 @@ function StaffStageBlock({
             <>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--gl-mute)' }}>
                 {submittedCount} of {total} submitted
-                {stage.due_date && ` · ${stageLate ? 'was ' : ''}due ${formatDateShort(stage.due_date + 'T00:00:00')}`}
+                {stage.due_date &&
+                  ` · ${stageLate ? 'was ' : ''}due ${formatDateShort(stage.due_date + 'T00:00:00')}`}
               </p>
               {missing.length > 0 && (
                 <button
@@ -500,6 +579,7 @@ function StaffStageBlock({
               member={r}
               submission={sub ?? null}
               stageDueDate={stage.due_date}
+              isInstructor={isInstructor}
             />
           )
         })
@@ -512,11 +592,19 @@ function StaffStudentRow({
   member,
   submission,
   stageDueDate,
+  isInstructor,
 }: {
   member: RosterMember
   submission: Submission | null
   stageDueDate: string | null
+  isInstructor: boolean
 }) {
+  const [showUpload, setShowUpload] = useState(false)
+  const [returnFile, setReturnFile] = useState<File | null>(null)
+  const [returnError, setReturnError] = useState<string | null>(null)
+  const [pending, startTransition] = useTransition()
+  const router = useRouter()
+
   if (!submission) {
     return (
       <div
@@ -532,7 +620,9 @@ function StaffStudentRow({
           <p style={{ margin: 0, fontSize: 14, color: 'var(--gl-mute)' }}>
             {member.name ?? member.email}
           </p>
-          <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--gl-mute)' }}>
+          <p
+            style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--gl-mute)' }}
+          >
             Not submitted
           </p>
         </div>
@@ -545,57 +635,253 @@ function StaffStudentRow({
     stageDueDate &&
     submittedDate > new Date(stageDueDate + 'T23:59:59')
 
+  function handleReturnUpload(e: React.FormEvent) {
+    e.preventDefault()
+    setReturnError(null)
+    if (!returnFile) {
+      setReturnError('Choose a file first.')
+      return
+    }
+    const v = validateFile(returnFile)
+    if (v) {
+      setReturnError(v)
+      return
+    }
+
+    const fd = new FormData()
+    fd.set('submission_id', String(submission!.id))
+    fd.set('file', returnFile)
+
+    startTransition(async () => {
+      const res = await fetch('/api/submissions/return', {
+        method: 'POST',
+        body: fd,
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setReturnError(data?.error ?? 'Upload failed.')
+        return
+      }
+      setReturnFile(null)
+      setShowUpload(false)
+      router.refresh()
+    })
+  }
+
   return (
     <div
       style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         padding: '8px 0',
         borderBottom: '0.5px solid var(--gl-hairline)',
       }}
     >
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <p style={{ margin: 0, fontSize: 14 }}>
-          {member.name ?? member.email}
-        </p>
-        <p
-          style={{
-            margin: '2px 0 0',
-            fontSize: 12,
-            color: 'var(--gl-mute)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            flexWrap: 'wrap',
-          }}
-        >
-          {isLate && (
-            <span
-              className="gl-pending-tag"
-              style={{ fontSize: 9, padding: '1px 6px' }}
-            >
-              Late
-            </span>
-          )}
-          <span
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p style={{ margin: 0, fontSize: 14 }}>
+            {member.name ?? member.email}
+          </p>
+          <p
             style={{
-              fontFamily:
-                'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+              margin: '2px 0 0',
+              fontSize: 12,
+              color: 'var(--gl-mute)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              flexWrap: 'wrap',
             }}
           >
-            {submission.filename}
-          </span>
-          <span> · {formatDateShort(submission.submitted_at)}</span>
-        </p>
+            {isLate && (
+              <span
+                className="gl-pending-tag"
+                style={{ fontSize: 9, padding: '1px 6px' }}
+              >
+                Late
+              </span>
+            )}
+            <span
+              style={{
+                fontFamily:
+                  'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+              }}
+            >
+              {submission.filename}
+            </span>
+            <span> · {formatDateShort(submission.submitted_at)}</span>
+          </p>
+        </div>
+        <a
+          href={`/api/submissions/download/${submission.id}`}
+          className="gl-btn-ghost"
+          style={{ textDecoration: 'none' }}
+        >
+          Download
+        </a>
       </div>
-      <a
-        href={`/api/submissions/download/${submission.id}`}
-        className="gl-btn-ghost"
-        style={{ textDecoration: 'none' }}
-      >
-        Download
-      </a>
+
+      {/* Returns sub-row — only for instructor (tutors are read-only) */}
+      {isInstructor && (
+        <div style={{ marginTop: 8 }}>
+          {submission.returned_filename ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                paddingLeft: 16,
+                borderLeft: '2px solid var(--gl-accent)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  minWidth: 0,
+                }}
+              >
+                <span className="gl-pending-tag" style={{ flexShrink: 0 }}>
+                  Returned
+                </span>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: 'var(--gl-mute)',
+                    fontFamily:
+                      'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {submission.returned_filename}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="gl-btn-ghost"
+                onClick={() => setShowUpload((v) => !v)}
+                style={{ flexShrink: 0 }}
+              >
+                {showUpload ? 'Cancel' : 'Replace return'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ paddingLeft: 16 }}>
+              {!showUpload && (
+                <button
+                  type="button"
+                  className="gl-add-stage-btn"
+                  onClick={() => setShowUpload(true)}
+                  style={{ marginTop: 0 }}
+                >
+                  + Upload return
+                </button>
+              )}
+            </div>
+          )}
+
+          {showUpload && (
+            <form onSubmit={handleReturnUpload} style={{ marginTop: 10, paddingLeft: 16 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <FilePicker
+                  accept=".doc,.docx,.odt"
+                  onChange={(f) => setReturnFile(f)}
+                  selected={returnFile}
+                  disabled={pending}
+                />
+                <button
+                  type="submit"
+                  disabled={pending || !returnFile}
+                  className="gl-btn"
+                  style={{
+                    width: 'auto',
+                    padding: '6px 12px',
+                    fontSize: 10,
+                    flexShrink: 0,
+                  }}
+                >
+                  {pending ? 'Uploading…' : 'Upload return'}
+                </button>
+              </div>
+              {returnError && (
+                <div
+                  className="gl-error"
+                  style={{ marginTop: 8, fontSize: 12 }}
+                  role="alert"
+                >
+                  {returnError}
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* Tutors see returns read-only when present, no upload UI */}
+      {!isInstructor && submission.returned_filename && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+            marginTop: 8,
+            paddingLeft: 16,
+            borderLeft: '2px solid var(--gl-accent)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              minWidth: 0,
+            }}
+          >
+            <span className="gl-pending-tag" style={{ flexShrink: 0 }}>
+              Returned
+            </span>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                color: 'var(--gl-mute)',
+                fontFamily:
+                  'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {submission.returned_filename}
+            </p>
+          </div>
+          <a
+            href={`/api/submissions/return/download/${submission.id}`}
+            className="gl-btn-ghost"
+            style={{ textDecoration: 'none', flexShrink: 0 }}
+          >
+            Download
+          </a>
+        </div>
+      )}
     </div>
   )
 }
