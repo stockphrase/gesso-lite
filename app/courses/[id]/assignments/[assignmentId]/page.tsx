@@ -66,7 +66,6 @@ export default async function AssignmentDetailPage({
 
   const stages = (assignment.stages ?? []) as Stage[]
 
-  // Now selecting returned_* columns too.
   let submissions: Array<{
     id: number
     user_id: string
@@ -151,6 +150,14 @@ export default async function AssignmentDetailPage({
               {assignment.title}
             </h1>
           </div>
+          {isInstructor && (
+            <Link
+              href={`/courses/${course.id}/assignments/${assignment.id}/edit`}
+              className="gl-btn-sm"
+            >
+              Edit
+            </Link>
+          )}
         </div>
 
         {assignment.description && (

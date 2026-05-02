@@ -103,7 +103,18 @@ export default async function CoursesPage({
             <h1 className="gl-h1">Courses</h1>
           </div>
           {isInstructor && (
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <Link
+                href="/audit"
+                className="gl-btn-sm"
+                style={{
+                  background: 'transparent',
+                  color: 'var(--gl-mute)',
+                  borderColor: 'var(--gl-hairline)',
+                }}
+              >
+                Audit
+              </Link>
               <Link
                 href="/templates"
                 className="gl-btn-sm"
