@@ -95,9 +95,14 @@ export default async function CoursesPage() {
             <h1 className="gl-h1">Courses</h1>
           </div>
           {isInstructor && (
-            <Link href="/courses/new" className="gl-btn-sm">
-              + New course
-            </Link>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Link href="/templates" className="gl-btn-sm" style={{ background: 'transparent', color: 'var(--gl-mute)', borderColor: 'var(--gl-hairline)' }}>
+                Templates
+              </Link>
+              <Link href="/courses/new" className="gl-btn-sm">
+                + New course
+              </Link>
+            </div>
           )}
         </div>
 
