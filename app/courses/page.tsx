@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import ThemeToggle from '@/app/_components/ThemeToggle'
 
 type Course = {
   id: number
@@ -103,7 +104,7 @@ export default async function CoursesPage() {
         {activeGroups.length === 0 && archivedGroups.length === 0 && (
           <div className="gl-empty">
             {isInstructor
-              ? 'No courses yet. Click “+ New course” to create one.'
+              ? 'No courses yet. Click "+ New course" to create one.'
               : 'You are not enrolled in any courses yet.'}
           </div>
         )}
@@ -177,23 +178,26 @@ export default async function CoursesPage() {
 
         <div className="gl-footer">
           <span>Signed in as {profile?.email}</span>
-          <form action="/api/auth/signout" method="POST">
-            <button
-              type="submit"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--gl-mute)',
-                cursor: 'pointer',
-                font: 'inherit',
-                fontSize: 13,
-                padding: 0,
-                borderBottom: '1px solid var(--gl-hairline)',
-              }}
-            >
-              Sign out
-            </button>
-          </form>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <ThemeToggle />
+            <form action="/api/auth/signout" method="POST">
+              <button
+                type="submit"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--gl-mute)',
+                  cursor: 'pointer',
+                  font: 'inherit',
+                  fontSize: 13,
+                  padding: 0,
+                  borderBottom: '1px solid var(--gl-hairline)',
+                }}
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </main>

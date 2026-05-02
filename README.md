@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Step 6 — Assignments + Dark Mode
 
-## Getting Started
+Drop the contents of this archive into the root of the gesso-lite repo. The
+`app/` folder mirrors the project's structure exactly, so an unzip with
+overwrite will land each file in the right place.
 
-First, run the development server:
+## Files (9 total)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Replacements (overwrite existing files):
+- app/globals.css                              — adds dark theme variables and
+                                                 assignment/stage/toggle styles
+- app/layout.tsx                               — adds the no-flash theme init
+                                                 script in <head>
+- app/courses/page.tsx                         — adds <ThemeToggle /> in footer
+- app/courses/[id]/page.tsx                    — replaces the Assignments
+                                                 placeholder with a real list
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+New files:
+- app/_components/ThemeToggle.tsx              — three-state Light/Auto/Dark
+                                                 toggle, persists via
+                                                 localStorage
+- app/courses/[id]/assignments/new/page.tsx    — assignment create form
+                                                 (title, description, stages)
+- app/courses/[id]/assignments/new/actions.ts  — server action for create
+- app/courses/[id]/assignments/[assignmentId]/page.tsx
+                                                — read-only assignment detail
+                                                  page (submission UI in Step 7)
+- app/api/courses/[id]/title/route.ts          — small endpoint the new-
+                                                 assignment form calls to
+                                                 populate the breadcrumb
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How to apply
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+From the gesso-lite repo root:
 
-## Learn More
+    unzip /path/to/gesso-lite-step6.zip -d .
 
-To learn more about Next.js, take a look at the following resources:
+Or if you'd rather see what's about to change first:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    unzip -l /path/to/gesso-lite-step6.zip
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## After applying
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. The dev server's hot reload should pick up everything. If it's confused,
+   stop with Ctrl+C and run `npm run dev` again.
+2. No database migration this time — assignments use the existing
+   `assignments` table from Step 1's migration.
+3. Run through the test plan from chat:
+   - Theme toggle works (Light / Auto / Dark, persists across reloads)
+   - Dark mode looks reasonable (no white flashes, orange accent softens)
+   - Create assignment from a course home → redirects to its detail page
+   - Course home shows the assignment with "Stage Name due Month Day, Year"
+   - Multiple assignments sort by next-stage due date
+   - Assignments with all past stages show "All stages complete" muted

@@ -1,3 +1,142 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gl-ink: #0a0a0a;
+  --color-gl-paper: #ffffff;
+  --color-gl-mute: #6b6b6b;
+  --color-gl-soft: #f4f4f2;
+  --color-gl-line: #1a1a1a;
+  --color-gl-hairline: rgba(10, 10, 10, 0.12);
+  --color-gl-danger: #8b1f1f;
+  --color-gl-danger-soft: #faecec;
+  --color-gl-accent: #c25410;
+  --color-gl-accent-soft: #fdf1e6;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+  --gl-ink: var(--color-gl-ink);
+  --gl-paper: var(--color-gl-paper);
+  --gl-mute: var(--color-gl-mute);
+  --gl-soft: var(--color-gl-soft);
+  --gl-line: var(--color-gl-line);
+  --gl-hairline: var(--color-gl-hairline);
+  --gl-danger: var(--color-gl-danger);
+  --gl-danger-soft: var(--color-gl-danger-soft);
+  --gl-accent: var(--color-gl-accent);
+  --gl-accent-soft: var(--color-gl-accent-soft);
+}
+
+/* Dark theme — applied when:
+ *   - <html data-theme="dark">  (manual override)
+ *   - <html data-theme="auto"> AND OS is dark
+ *   - <html> has no data-theme attribute AND OS is dark
+ * The toggle component sets data-theme; in "auto" mode the media query handles it.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --gl-ink: #e8e6e1;
+    --gl-paper: #0e0e0e;
+    --gl-mute: #8a8784;
+    --gl-soft: #080808;
+    --gl-line: #d4d2cc;
+    --gl-hairline: rgba(232, 230, 225, 0.14);
+    --gl-danger: #e57878;
+    --gl-danger-soft: #2a1414;
+    --gl-accent: #e87d3e;
+    --gl-accent-soft: #2a1a0c;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --gl-ink: #e8e6e1;
+  --gl-paper: #0e0e0e;
+  --gl-mute: #8a8784;
+  --gl-soft: #080808;
+  --gl-line: #d4d2cc;
+  --gl-hairline: rgba(232, 230, 225, 0.14);
+  --gl-danger: #e57878;
+  --gl-danger-soft: #2a1414;
+  --gl-accent: #e87d3e;
+  --gl-accent-soft: #2a1a0c;
+}
+
+html, body {
+  background: var(--gl-paper);
+  color: var(--gl-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.gl-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gl-mute);
+  font-weight: 500;
+}
+
+.gl-input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--gl-line);
+  padding: 8px 0;
+  font-size: 15px;
+  color: var(--gl-ink);
+  outline: none;
+}
+.gl-input:focus {
+  border-bottom-color: var(--gl-ink);
+  box-shadow: 0 1px 0 0 var(--gl-ink);
+}
+
+.gl-btn {
+  display: inline-block;
+  width: 100%;
+  background: var(--gl-ink);
+  color: var(--gl-paper);
+  border: 1px solid var(--gl-ink);
+  padding: 12px 16px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.gl-btn:hover:not(:disabled) {
+  background: var(--gl-paper);
+  color: var(--gl-ink);
+}
+.gl-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gl-link {
+  color: var(--gl-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--gl-line);
+  padding-bottom: 1px;
+}
+.gl-link:hover {
+  border-bottom-color: var(--gl-mute);
+}
+
+.gl-error {
+  background: var(--gl-danger-soft);
+  border-left: 2px solid var(--gl-danger);
+  color: var(--gl-danger);
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .gl-page {
   min-height: 100vh;
   background: var(--gl-soft);
@@ -86,6 +225,8 @@
   align-items: center;
   font-size: 13px;
   color: var(--gl-mute);
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .gl-btn-sm {
@@ -122,4 +263,249 @@
   color: var(--gl-mute);
   font-size: 14px;
   line-height: 1.6;
+}
+
+.gl-banner {
+  background: var(--gl-accent-soft);
+  border-left: 2px solid var(--gl-accent);
+  padding: 14px 16px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--gl-accent);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.gl-banner-title {
+  margin: 0 0 4px;
+  font-weight: 500;
+}
+
+.gl-banner-body {
+  margin: 0;
+}
+
+.gl-banner-body + .gl-banner-body {
+  margin-top: 4px;
+}
+
+.gl-banner-dismiss {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--gl-accent);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.gl-pending-tag {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gl-accent);
+  padding: 2px 8px;
+  border: 0.5px solid var(--gl-accent);
+  font-weight: 500;
+}
+
+.gl-roster-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gl-hairline);
+}
+
+.gl-roster-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gl-roster-name {
+  margin: 0;
+  font-size: 15px;
+}
+
+.gl-roster-email {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--gl-mute);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.gl-roster-email-pending {
+  margin: 0;
+  font-size: 13px;
+  color: var(--gl-mute);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.gl-btn-ghost {
+  background: transparent;
+  border: 0.5px solid var(--gl-hairline);
+  padding: 6px 10px;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gl-mute);
+  cursor: pointer;
+}
+
+.gl-btn-ghost:hover {
+  border-color: var(--gl-mute);
+  color: var(--gl-ink);
+}
+
+.gl-textarea {
+  width: 100%;
+  min-height: 90px;
+  border: 0;
+  border-bottom: 1px solid var(--gl-line);
+  background: transparent;
+  padding: 8px 0;
+  font-size: 15px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  resize: vertical;
+  outline: none;
+  color: var(--gl-ink);
+}
+
+.gl-textarea:focus {
+  border-bottom-color: var(--gl-ink);
+  box-shadow: 0 1px 0 0 var(--gl-ink);
+}
+
+/* Assignments + stages styles */
+
+.gl-assignment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gl-hairline);
+  text-decoration: none;
+  color: var(--gl-ink);
+}
+
+.gl-assignment-row:hover {
+  background: var(--gl-soft);
+}
+
+.gl-assignment-row-complete {
+  color: var(--gl-mute);
+}
+
+.gl-assignment-meta {
+  font-size: 13px;
+  color: var(--gl-mute);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.gl-stage-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--gl-hairline);
+}
+
+.gl-stage-name {
+  flex: 1;
+}
+
+.gl-stage-date {
+  flex: 0 0 180px;
+}
+
+.gl-stage-input {
+  width: 100%;
+  border: 0;
+  border-bottom: 0.5px solid var(--gl-hairline);
+  background: transparent;
+  padding: 4px 0;
+  font-size: 14px;
+  color: var(--gl-ink);
+  outline: none;
+  font-family: var(--font-sans);
+}
+
+.gl-stage-input:focus {
+  border-bottom-color: var(--gl-ink);
+}
+
+.gl-stage-remove {
+  background: transparent;
+  border: none;
+  color: var(--gl-mute);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 0;
+  flex-shrink: 0;
+}
+
+.gl-stage-remove:hover {
+  color: var(--gl-ink);
+}
+
+.gl-add-stage-btn {
+  background: transparent;
+  border: 0.5px dashed var(--gl-hairline);
+  color: var(--gl-mute);
+  padding: 8px 14px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.gl-add-stage-btn:hover {
+  border-color: var(--gl-mute);
+  color: var(--gl-ink);
+}
+
+/* Theme toggle */
+
+.gl-theme-toggle {
+  display: inline-flex;
+  border: 0.5px solid var(--gl-hairline);
+  padding: 2px;
+  gap: 0;
+}
+
+.gl-theme-toggle button {
+  background: transparent;
+  border: none;
+  padding: 4px 10px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gl-mute);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.gl-theme-toggle button:hover {
+  color: var(--gl-ink);
+}
+
+.gl-theme-toggle button[aria-pressed="true"] {
+  background: var(--gl-ink);
+  color: var(--gl-paper);
+}
+
+/* Make native form controls look right in dark mode */
+
+input, textarea, select {
+  color-scheme: inherit;
 }
