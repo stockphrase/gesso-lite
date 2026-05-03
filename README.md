@@ -1,58 +1,34 @@
-# Gesso Lite — docs site
+# Gesso Lite
 
-Adds a `/docs` folder containing a static GitHub Pages site that
-mirrors Gesso Lite's own aesthetic: black-on-white, hairline borders,
-optional dark mode, an orange accent. No Jekyll theme, no build step.
-Just HTML and CSS.
+A clean, minimal course management tool for writing instructors.
+Built to replace Canvas LMS for the case of one teacher, a few classes.
 
-## Files (6 total)
+**Documentation:** https://stockphrase.github.io/gesso-lite/
 
-New, all under `/docs`:
-- `index.html` — landing page (what it does, roles, stack)
-- `installation.html` — setup guide
-- `instructor-manual.html` — for the instructor
-- `student-manual.html` — for students
-- `style.css` — shared styling, mirrors gesso-lite.no-silo.com aesthetic
-- `theme.js` — light/dark theme toggle
-- `_config.yml` — minimal Jekyll config (tells GitHub Pages to serve files as-is)
+## What it does
 
-## Apply
+- **Multi-stage assignments.** Each assignment can have any number of
+  draft stages with their own due dates. Late submissions are flagged.
+- **Bulk download and return.** Pull every student's draft as a single
+  zip. Mark them up. Upload back as one zip and they're routed
+  automatically to each student by filename.
+- **Course readings.** Upload PDFs once, students download as needed.
+- **Roster management by whitelist.** Add students by email; they
+  register themselves. Only whitelisted addresses can sign up.
+- **Course templates.** Save a course's structure for reuse next year.
+- **Right to be forgotten.** Delete a course at term's end. A backup
+  zip downloads first, then everything's wiped — files, accounts, all
+  of it.
 
-    unzip /path/to/gesso-lite-docs.zip -d .
+## Stack
 
-The new files land at `docs/` in the repo root.
+Next.js 16, TypeScript, Tailwind CSS v4, Supabase (Postgres + Auth +
+Storage), JSZip. Deploys to Vercel.
 
-## Enable GitHub Pages
+## Setup
 
-After committing and pushing:
+See the [Installation guide](https://stockphrase.github.io/gesso-lite/installation.html).
 
-1. On GitHub, go to your repo's Settings → Pages
-2. Under "Build and deployment":
-   - Source: **Deploy from a branch**
-   - Branch: `main`, folder: `/docs`
-3. Save
+## License
 
-Wait 1–2 minutes. GitHub will build and publish. The URL will be:
-
-    https://stockphrase.github.io/gesso-lite/
-
-You can see the deployment status at the bottom of the Pages settings page.
-
-## Local preview
-
-To preview before pushing, just open the HTML files directly in a browser:
-
-    open docs/index.html
-
-The pages are pure HTML/CSS/JS — no server needed. Theme toggle works
-locally via localStorage.
-
-## Editing
-
-These files are hand-written HTML. To update content, edit the `.html`
-files directly. Each page links to the next via plain `<a href>` tags.
-
-If you want to add a fifth page (e.g. "FAQ"), follow the structure of
-the existing pages: copy `student-manual.html`, change the `<title>`
-and content, link to it from the relevant places (probably from the
-nav buttons on `index.html` and the footer of every page).
+MIT.
