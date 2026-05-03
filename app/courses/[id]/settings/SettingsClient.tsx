@@ -16,18 +16,33 @@ type DeleteCounts = {
 export default function SettingsClient({
   courseId,
   courseTitle,
+  courseTerm,
+  courseYear,
   defaultTemplateName,
   isArchived,
   counts,
 }: {
   courseId: number
   courseTitle: string
+  courseTerm: string | null
+  courseYear: number | null
   defaultTemplateName: string
   isArchived: boolean
   counts: DeleteCounts
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
+
+  // Details (rename course)
+  const [titleField, setTitleField] = useState(courseTitle)
+  const [termField, setTermField] = useState<'Fall' | 'Winter'>(
+    courseTerm === 'Winter' ? 'Winter' : 'Fall'
+  )
+  const [yearField, setYearField] = useState(
+    courseYear ?? new Date().getFullYear()
+  )
+  const [detailsError, setDetailsError] = useState<string | null>(null)
+  const [detailsSaved, setDetailsSaved] = useState(false)
 
   // Save-as-template
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
@@ -45,6 +60,35 @@ export default function SettingsClient({
     useState<'idle' | 'backing-up' | 'awaiting-confirmation' | 'deleting'>(
       'idle'
     )
+
+  function handleSaveDetails(e: React.FormEvent) {
+    e.preventDefault()
+    setDetailsError(null)
+    setDetailsSaved(false)
+    if (!titleField.trim()) {
+      setDetailsError('Title required.')
+      return
+    }
+    startTransition(async () => {
+      const res = await fetch(`/api/courses/${courseId}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: titleField.trim(),
+          term: termField,
+          year: yearField,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setDetailsError(data?.error ?? 'Could not save.')
+        return
+      }
+      setDetailsSaved(true)
+      router.refresh()
+      setTimeout(() => setDetailsSaved(false), 3000)
+    })
+  }
 
   function handleSaveTemplate(e: React.FormEvent) {
     e.preventDefault()
@@ -95,18 +139,12 @@ export default function SettingsClient({
     setDeleteError(null)
 
     if (titleConfirm.trim() !== courseTitle) {
-      setDeleteError(
-        `Type "${courseTitle}" exactly to confirm.`
-      )
+      setDeleteError(`Type "${courseTitle}" exactly to confirm.`)
       return
     }
 
     setDeletePhase('backing-up')
 
-    // Phase 1: backup download. Trigger via a navigation that returns
-    // the zip with Content-Disposition. We can't easily detect download
-    // success in the browser, so we use a fetch + manual blob save and
-    // wait for the user to confirm.
     const params = new URLSearchParams({
       include_submissions: String(includeSubmissions),
       include_returns: String(includeReturns),
@@ -122,12 +160,12 @@ export default function SettingsClient({
         return
       }
       const blob = await res.blob()
-      const filename = res.headers
-        .get('content-disposition')
-        ?.match(/filename="([^"]+)"/)?.[1] ??
+      const filename =
+        res.headers
+          .get('content-disposition')
+          ?.match(/filename="([^"]+)"/)?.[1] ??
         `${courseTitle.replace(/[^A-Za-z0-9]+/g, '-')}_backup.zip`
 
-      // Trigger the browser download.
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -146,11 +184,13 @@ export default function SettingsClient({
   }
 
   function handleProceedAfterBackup() {
-    if (!confirm(
-      'Confirm: the backup downloaded successfully and you have it. ' +
-      'Click OK to delete the course, all its data, and any students/tutors ' +
-      'enrolled only in this course. This cannot be undone.'
-    )) {
+    if (
+      !confirm(
+        'Confirm: the backup downloaded successfully and you have it. ' +
+          'Click OK to delete the course, all its data, and any students/tutors ' +
+          'enrolled only in this course. This cannot be undone.'
+      )
+    ) {
       return
     }
 
@@ -186,6 +226,99 @@ export default function SettingsClient({
 
   return (
     <>
+      {/* Details (rename) */}
+      <div className="gl-section">
+        <h2 className="gl-h2">Details</h2>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--gl-ink)',
+            lineHeight: 1.6,
+            margin: '0 0 14px',
+          }}
+        >
+          Change the course title, term, or year. Useful if your section
+          assignment changes or you fix a typo.
+        </p>
+
+        {detailsSaved && (
+          <div className="gl-banner" style={{ marginBottom: 14 }}>
+            <div style={{ flex: 1 }}>
+              <p className="gl-banner-title">Details saved.</p>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveDetails}>
+          <div style={{ marginBottom: 14 }}>
+            <label htmlFor="title" className="gl-label">
+              Title
+            </label>
+            <input
+              id="title"
+              className="gl-input"
+              type="text"
+              value={titleField}
+              onChange={(e) => setTitleField(e.target.value)}
+              required
+            />
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <label htmlFor="term" className="gl-label">
+              Term
+            </label>
+            <select
+              id="term"
+              className="gl-input"
+              value={termField}
+              onChange={(e) =>
+                setTermField(e.target.value as 'Fall' | 'Winter')
+              }
+              style={{ appearance: 'none', background: 'transparent' }}
+            >
+              <option value="Fall">Fall</option>
+              <option value="Winter">Winter</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 18 }}>
+            <label htmlFor="year" className="gl-label">
+              Year
+            </label>
+            <input
+              id="year"
+              className="gl-input"
+              type="number"
+              min={2020}
+              max={2100}
+              value={yearField}
+              onChange={(e) => setYearField(parseInt(e.target.value, 10))}
+              required
+            />
+          </div>
+
+          {detailsError && (
+            <div
+              className="gl-error"
+              style={{ marginBottom: 14, fontSize: 13 }}
+              role="alert"
+            >
+              {detailsError}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={pending}
+            className="gl-btn"
+            style={{ width: 'auto', padding: '8px 14px' }}
+          >
+            {pending ? 'Saving…' : 'Save details'}
+          </button>
+        </form>
+      </div>
+
       {/* Save as template */}
       <div className="gl-section">
         <h2 className="gl-h2">Save as template</h2>

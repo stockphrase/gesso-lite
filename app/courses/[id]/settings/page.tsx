@@ -128,6 +128,8 @@ export default async function CourseSettingsPage({
         <SettingsClient
           courseId={course.id}
           courseTitle={course.title}
+          courseTerm={course.term}
+          courseYear={course.year}
           defaultTemplateName={defaultTemplateName}
           isArchived={!!course.archived_at}
           counts={counts}
