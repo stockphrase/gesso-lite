@@ -1,0 +1,60 @@
+/* ============================================================================
+ * Gesso Lite — responsive overrides for narrow screens
+ * ============================================================================
+ * Additive to globals.css. Targets viewports below 600px.
+ * Adjusts layout for phone-sized screens without changing desktop appearance.
+ * ========================================================================= */
+
+@media (max-width: 600px) {
+  /* Tighter side padding so content has more room to breathe. */
+  .gl-page {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Stack the h1 above the action button row (instead of side by side). */
+  .gl-page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
+
+  /* Action button row gets its own line under the title and may wrap. */
+  .gl-page-header > div:last-child {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* Slightly smaller heading sizes. */
+  .gl-h1 {
+    font-size: 26px !important;
+  }
+  .gl-h2 {
+    font-size: 18px !important;
+  }
+
+  /* Course/template/audit row items: tighter padding. */
+  .gl-row {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  /* Compact the small action buttons (Audit, Templates, + New course). */
+  .gl-btn-sm {
+    padding: 6px 10px !important;
+    font-size: 10px !important;
+    letter-spacing: 0.16em !important;
+  }
+}
+
+/* Even narrower (older phones, ~360-380px wide). */
+@media (max-width: 380px) {
+  .gl-h1 {
+    font-size: 22px !important;
+  }
+
+  .gl-btn-sm {
+    padding: 5px 8px !important;
+    letter-spacing: 0.12em !important;
+  }
+}

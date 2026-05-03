@@ -1,61 +1,121 @@
-# Step 13b — Password reset flow
+# Step 13c — Security headers + mobile responsive
 
-Adds the missing `/account/update-password` page that students land on
-after clicking a password-reset link in their email.
+## What's in this step
 
-## Files (1 total)
+1. **next.config.ts**: replaces the existing config with one that sets
+   security headers on every response. Includes Content-Security-Policy,
+   Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options,
+   Referrer-Policy, and Permissions-Policy.
+
+2. **app/responsive.css**: new file with media-query overrides that
+   improve the layout on phone-sized screens (≤600px wide). Doesn't
+   touch desktop appearance.
+
+## Files (2 total)
 
 New:
-- app/(auth)/account/update-password/page.tsx
-    Reads the session set by Supabase after the reset-link redirect,
-    presents a form to set a new password, applies it via
-    supabase.auth.updateUser({ password }), then redirects to /courses.
+- app/responsive.css
 
-The reset-password REQUEST page (where users enter their email and
-trigger the reset email) already exists at app/(auth)/reset-password
-from Step 3. Its `redirectTo` already points to
-`/auth/callback?next=/account/update-password`, which is what the
-auth callback at app/auth/callback/route.ts handles.
+Replaces:
+- next.config.ts
 
 ## Apply
 
-    unzip /path/to/gesso-lite-step13b.zip -d .
+1. Unzip into the repo root:
+       unzip /path/to/gesso-lite-step13c.zip -d .
 
-If you already have an `app/(auth)/account/update-password/page.tsx`
-in your repo, this overwrites it with the more robust version that
-handles the auth-state listener.
+2. Manually edit `app/layout.tsx`. Two small changes:
 
-No database migration. No Supabase config changes needed.
+   a. Add an import for the new responsive.css under the existing
+      `import "./globals.css"` line:
 
-## Supabase URL configuration
+          import "./globals.css"
+          import "./responsive.css"     // <-- ADD THIS LINE
 
-For the email link to work in production, you'll need to add your
-production URL to Supabase's allow list. For local dev, ensure your
-Site URL or Redirect URLs include http://localhost:3000.
+   b. Add a `viewport` metadata export so phone browsers render the
+      page at the correct width. Put this near the existing `metadata`
+      export:
 
-Dashboard: Authentication → URL Configuration:
-- Site URL: http://localhost:3000 (for dev)
-- Redirect URLs: add http://localhost:3000/** if not already there
+          export const viewport = {
+            width: 'device-width',
+            initialScale: 1,
+          }
 
-When you deploy (Step 14), add your production URL to both fields.
+   The full file should look something like:
 
-## Test
+          import type { Metadata } from "next";
+          import "./globals.css";
+          import "./responsive.css";
 
-1. Go to /login → click "Forgot password?".
-2. Enter your email (mail@no-silo.com) → click "Send reset link".
-3. See the "Check your email" message.
-4. Open the email Supabase sent (might be in your project's Auth →
-   Email Templates section, or the actual email if you have SMTP set up).
-5. Click the link in the email. It goes to the Supabase auth domain,
-   which redirects through /auth/callback?code=… and lands on
-   /account/update-password.
-6. Enter a new password (≥8 chars), confirm it, click "Update password".
-7. Should see "Password updated" briefly, then redirect to /courses.
-8. Sign out. Sign in with the new password. Should work.
+          export const metadata: Metadata = {
+            title: "Gesso Lite",
+            description: "...",
+          };
 
-## If the link doesn't work locally
+          export const viewport = {
+            width: 'device-width',
+            initialScale: 1,
+          };
 
-For local dev, Supabase needs to know your dev URL. Check
-Authentication → URL Configuration. Site URL should be
-http://localhost:3000. If it's something else (like a Vercel preview
-URL), update it for now and we'll switch back at deployment.
+          export default function RootLayout({...}) { ... }
+
+3. Restart `npm run dev` (next.config.ts changes don't hot-reload; the
+   dev server must be restarted).
+
+## Test the security headers
+
+After restarting:
+
+1. Visit any page in the app.
+2. Open DevTools → Network tab.
+3. Click the request to `/courses` (or any page) in the network list.
+4. Look at the Response Headers section. You should see:
+   - Content-Security-Policy
+   - Strict-Transport-Security (only relevant in HTTPS, but it's set)
+   - X-Frame-Options: DENY
+   - X-Content-Type-Options: nosniff
+   - Referrer-Policy: strict-origin-when-cross-origin
+   - Permissions-Policy: camera=(), microphone=(), …
+5. The page should load and work normally. If anything is broken
+   (blank pages, missing styles, console errors mentioning "Refused to
+   load…"), the CSP needs adjustment. Tell me what's broken and I'll
+   amend it.
+
+## Test mobile responsive
+
+Two ways:
+
+**(a) Quick test in DevTools:**
+1. Open the app in your browser.
+2. F12 → click the "device toolbar" icon (top-left of DevTools, or
+   Ctrl+Shift+M on most browsers).
+3. Pick "iPhone SE" or any preset narrower than 400px.
+4. Navigate through the courses, audit page, settings page, etc.
+5. The page header should stack the title above the action buttons.
+   Headings are smaller. Padding tighter. Buttons fit on screen.
+
+**(b) Real phone test:**
+Your dev server logs an IP like `http://192.168.2.187:3000`. If your
+phone is on the same WiFi network, type that into your phone's browser.
+Sign in (you may need to register a test account), navigate around.
+
+## CSP gotchas
+
+If anything in the app stops working after applying the security headers,
+the most likely culprit is the Content-Security-Policy. Symptoms:
+- Console errors like "Refused to execute inline script…"
+- Console errors like "Refused to load…"
+- Iframes failing to load
+- Auth pages stuck
+
+Tell me which page broke and what the console error says, and we'll
+relax the CSP for that case.
+
+The CSP I wrote allows:
+- Scripts: from same origin only (Next.js's bundles)
+- Styles: same origin OR inline (the app uses style={{...}} extensively)
+- Connects: same origin + your Supabase URL + Supabase websocket
+- Images: same origin + data URLs + blob URLs (for downloads)
+- No iframes can embed the app
+- No Flash/Java plugins
+- HTTPS upgrade for any HTTP requests in production
