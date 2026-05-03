@@ -1,36 +1,34 @@
-# Course details edit (post-build patch)
+# Gesso Lite
 
-Adds a "Details" section to the course settings page, letting the
-instructor change course title, term, and year. Useful when a section
-assignment changes ("Section 02 → Section 04") or a typo needs fixing.
+A clean, minimal course management tool for writing instructors.
+Built to replace Canvas LMS for the case of one teacher, a few classes.
 
-## Files (3 total)
+**Documentation:** https://stockphrase.github.io/gesso-lite/
 
-New:
-- app/api/courses/[id]/update/route.ts
-    POST endpoint that updates courses.title, courses.term, courses.year
-    after re-validating instructor ownership. Logs a course.updated entry.
+## What it does
 
-Replaces:
-- app/courses/[id]/settings/SettingsClient.tsx
-    Adds the Details section at the top, above Save as template.
-- app/courses/[id]/settings/page.tsx
-    Passes courseTerm and courseYear through to SettingsClient.
+- **Multi-stage assignments.** Each assignment can have any number of
+  draft stages with their own due dates. Late submissions are flagged.
+- **Bulk download and return.** Pull every student's draft as a single
+  zip. Mark them up. Upload back as one zip and they're routed
+  automatically to each student by filename.
+- **Course readings.** Upload PDFs once, students download as needed.
+- **Roster management by whitelist.** Add students by email; they
+  register themselves. Only whitelisted addresses can sign up.
+- **Course templates.** Save a course's structure for reuse next year.
+- **Right to be forgotten.** Delete a course at term's end. A backup
+  zip downloads first, then everything's wiped — files, accounts, all
+  of it.
 
-## Apply
+## Stack
 
-    unzip /path/to/gesso-lite-course-edit.zip -d .
+Next.js 16, TypeScript, Tailwind CSS v4, Supabase (Postgres + Auth +
+Storage), JSZip. Deploys to Vercel.
 
-No database migration. Hot reload picks up the changes.
-Commit, push, Vercel auto-redeploys.
+## Setup
 
-## Test
+See the [Installation guide](https://stockphrase.github.io/gesso-lite/installation.html).
 
-1. Open any course → Settings.
-2. Top section is now "Details" with three fields pre-filled.
-3. Change the title (e.g. "Writing 2.04" → "Writing 2.04 - Section 04").
-4. Click "Save details".
-5. Banner shows "Details saved." Page refreshes; the new title appears
-   in the breadcrumb.
-6. Go back to /courses — verify the new title shows in the list.
-7. Try changing term (Fall ↔ Winter) and year too. Both should work.
+## License
+
+MIT.
