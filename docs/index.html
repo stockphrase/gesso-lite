@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gesso Lite — Course management for writing instructors</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    // Inline so the page paints with the right theme on first load (no flash).
+    (function() {
+      try {
+        var t = localStorage.getItem('gesso-lite-docs-theme');
+        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+  <button class="gl-theme-toggle" id="gl-theme-toggle" type="button">
+    <span id="gl-theme-label">Dark</span>
+  </button>
+
+  <main class="gl-shell">
+    <p class="gl-eyebrow">Gesso Lite</p>
+    <h1 class="gl-title">A clean slate.</h1>
+    <p class="gl-tagline">
+      Course management for writing instructors. One teacher, a few classes,
+      no surveillance.
+    </p>
+
+    <div class="gl-buttons">
+      <a class="gl-btn gl-btn-accent" href="https://github.com/stockphrase/gesso-lite">View on GitHub</a>
+      <a class="gl-btn" href="installation.html">Installation</a>
+      <a class="gl-btn" href="instructor-manual.html">Instructor Manual</a>
+      <a class="gl-btn" href="student-manual.html">Student Manual</a>
+    </div>
+
+    <h2 class="gl-h2">What it does</h2>
+
+    <div class="gl-grid-2">
+      <div class="gl-feature">
+        <p class="gl-feature-title">Multi-stage assignments</p>
+        <p class="gl-feature-body">
+          Each assignment can have any number of stages — outline,
+          draft, revision, final — with its own due date. Late submissions
+          are flagged automatically.
+        </p>
+      </div>
+      <div class="gl-feature">
+        <p class="gl-feature-title">Bulk download &amp; return</p>
+        <p class="gl-feature-body">
+          Pull every student's draft as a single zip. Mark them up.
+          Upload them back as one zip and they're routed automatically
+          by filename to each student.
+        </p>
+      </div>
+      <div class="gl-feature">
+        <p class="gl-feature-title">Course readings</p>
+        <p class="gl-feature-body">
+          Upload PDFs once, students download as needed. No
+          syllabus-attachment-by-email.
+        </p>
+      </div>
+      <div class="gl-feature">
+        <p class="gl-feature-title">Roster management</p>
+        <p class="gl-feature-body">
+          Add students by email. They register themselves; only
+          whitelisted addresses can sign up.
+        </p>
+      </div>
+      <div class="gl-feature">
+        <p class="gl-feature-title">Course templates</p>
+        <p class="gl-feature-body">
+          Save a course's structure as a reusable template. Teach the
+          same class next year without retyping every assignment.
+        </p>
+      </div>
+      <div class="gl-feature">
+        <p class="gl-feature-title">Right to be forgotten</p>
+        <p class="gl-feature-body">
+          When a course is over, delete it. Submissions, files, accounts —
+          all of it. A backup zip downloads first; nothing lingers on the server.
+        </p>
+      </div>
+    </div>
+
+    <h2 class="gl-h2">Roles</h2>
+
+    <div class="gl-roles">
+      <div class="gl-role">
+        <h3>Instructor</h3>
+        <ul>
+          <li>Create and manage courses</li>
+          <li>Build multi-stage assignments</li>
+          <li>View all submissions</li>
+          <li>Return marked work</li>
+          <li>Manage course readings</li>
+          <li>Save courses as templates</li>
+          <li>Delete courses entirely</li>
+        </ul>
+      </div>
+      <div class="gl-role">
+        <h3>Tutor</h3>
+        <ul>
+          <li>View student submissions</li>
+          <li>Download student work</li>
+          <li>Read course readings</li>
+        </ul>
+      </div>
+      <div class="gl-role">
+        <h3>Student</h3>
+        <ul>
+          <li>Submit drafts by stage</li>
+          <li>Resubmit before deadline</li>
+          <li>Download returned work</li>
+          <li>Access course readings</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="gl-h2">Built with</h2>
+
+    <div class="gl-stack">
+      <div class="gl-stack-item">
+        <p class="gl-stack-name">Next.js 16</p>
+        <p class="gl-stack-detail">App Router, server components</p>
+      </div>
+      <div class="gl-stack-item">
+        <p class="gl-stack-name">Supabase</p>
+        <p class="gl-stack-detail">Postgres, Auth, Storage</p>
+      </div>
+      <div class="gl-stack-item">
+        <p class="gl-stack-name">Tailwind CSS v4</p>
+        <p class="gl-stack-detail">Utility-first styling</p>
+      </div>
+      <div class="gl-stack-item">
+        <p class="gl-stack-name">TypeScript</p>
+        <p class="gl-stack-detail">End-to-end typing</p>
+      </div>
+      <div class="gl-stack-item">
+        <p class="gl-stack-name">Vercel</p>
+        <p class="gl-stack-detail">Deployment</p>
+      </div>
+      <div class="gl-stack-item">
+        <p class="gl-stack-name">JSZip</p>
+        <p class="gl-stack-detail">Bulk file handling</p>
+      </div>
+    </div>
+
+    <h2 class="gl-h2">Why a Lite version?</h2>
+
+    <div class="gl-prose">
+      <p>
+        The full Gesso supports multiple instructors, announcements,
+        markdown syllabi, and the rich machinery a department needs.
+        Gesso Lite is the same idea reduced to one teacher's workflow:
+        the bones of a course, no extra weight.
+      </p>
+      <p>
+        If you teach writing — drafts, comments, revisions — and want
+        a tool you can run yourself for a few classes a year without
+        ever having a meeting about features, this is for you.
+      </p>
+    </div>
+
+    <footer class="gl-footer">
+      <span class="gl-footer-tagline">A fresh surface. Start from scratch.</span>
+      <span>
+        <a href="https://github.com/stockphrase/gesso-lite">GitHub</a> ·
+        <a href="installation.html">Installation</a> ·
+        <a href="instructor-manual.html">Instructor</a> ·
+        <a href="student-manual.html">Student</a>
+      </span>
+    </footer>
+  </main>
+
+  <script src="theme.js"></script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Instructor Manual — Gesso Lite</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('gesso-lite-docs-theme');
+        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+  <button class="gl-theme-toggle" id="gl-theme-toggle" type="button">
+    <span id="gl-theme-label">Dark</span>
+  </button>
+
+  <main class="gl-shell">
+    <a class="gl-back" href="index.html">← Gesso Lite</a>
+
+    <p class="gl-eyebrow">Manual</p>
+    <h1 class="gl-h1">For instructors</h1>
+    <p class="gl-lede">
+      Run a writing course end to end: roster, assignments, drafts, returns,
+      readings, archive.
+    </p>
+
+    <div class="gl-prose">
+
+      <h2 class="gl-h2">First sign-in</h2>
+      <p>
+        Visit the <strong>/register</strong> page on your Gesso Lite site and
+        register with the instructor email set up during installation.
+        You'll be auto-promoted to instructor and land on the empty
+        courses page.
+      </p>
+
+      <h2 class="gl-h2">Creating a course</h2>
+      <ol>
+        <li>From the courses page, click <strong>+ New course</strong>.</li>
+        <li>Title: a recognizable name (e.g. "Writing 2.04").</li>
+        <li>Term: Fall or Winter.</li>
+        <li>Year: the calendar year the term begins.</li>
+        <li>Click Create.</li>
+      </ol>
+      <p>
+        Courses group on the courses page by academic year. Fall 2026 and
+        Winter 2027 both fall under "2026–27".
+      </p>
+
+      <h2 class="gl-h2">Adding students</h2>
+      <p>
+        Open the course → <strong>Roster</strong>. Two ways to add people:
+      </p>
+
+      <h3 class="gl-h3">One at a time</h3>
+      <p>
+        Type the email, pick the role (student or tutor), click Add.
+      </p>
+
+      <h3 class="gl-h3">Bulk paste</h3>
+      <p>
+        Paste a list of emails (one per line, or comma-separated) into the
+        bulk-paste box. They all get added as students.
+      </p>
+
+      <p>
+        Adding someone to the roster doesn't create their account — it
+        just allows them to register. They register themselves at
+        <strong>/register</strong>; only whitelisted addresses can sign up.
+      </p>
+
+      <div class="gl-callout">
+        Send students the URL of your Gesso Lite site and tell them to
+        register with the same email address you added to the roster.
+        Once they register, they're enrolled automatically.
+      </div>
+
+      <h2 class="gl-h2">Creating an assignment</h2>
+      <p>
+        On the course page → <strong>+ New assignment</strong>.
+      </p>
+      <ul>
+        <li><strong>Title:</strong> e.g. "Memoir Essay".</li>
+        <li>
+          <strong>Description:</strong> optional. Shown to students on the
+          assignment page.
+        </li>
+        <li>
+          <strong>Stages:</strong> a stage is a draft. Each has a name
+          ("Outline", "Draft 1", "Final") and a due date. Add as many as
+          you want with the + Add stage button.
+        </li>
+      </ul>
+      <p>Click Create.</p>
+
+      <h3 class="gl-h3">Editing an assignment later</h3>
+      <p>
+        On the assignment detail page, click <strong>Edit</strong>.
+        You can rename it, add/remove/reorder stages, change due dates.
+        Renaming a stage automatically updates submissions filed under
+        that stage. Removing a stage that has submissions is refused —
+        rename instead, or remove the submissions first.
+      </p>
+
+      <h2 class="gl-h2">Reviewing submissions</h2>
+      <p>
+        From an assignment page, you see every student who submitted, in
+        a table sorted by stage then by name. For each submission you can:
+      </p>
+      <ul>
+        <li><strong>Download</strong> the file directly.</li>
+        <li>
+          <strong>Bulk download all submissions for one stage</strong> — a
+          single zip arrives with one file per student. Filenames embed
+          the student's last name and a 5-character code (e.g.
+          <code>Anderson_Memoir-Essay_k7m3p.docx</code>).
+        </li>
+      </ul>
+
+      <h2 class="gl-h2">Returning marked-up work</h2>
+      <p>
+        Two ways:
+      </p>
+
+      <h3 class="gl-h3">One at a time</h3>
+      <p>
+        Click the upload icon next to a submission. Pick the marked-up
+        file. It's stored as a return for that student, that stage. The
+        student sees it next time they sign in.
+      </p>
+
+      <h3 class="gl-h3">Bulk upload</h3>
+      <p>
+        After marking up the bulk-download zip, drop it back into the
+        <strong>Bulk return</strong> uploader. Filenames must keep the
+        <code>_xxxxx.ext</code> suffix from the original (the 5-character
+        code is what routes each file to the right student). Other parts
+        of the filename can change (e.g. add <code>_marked</code>).
+      </p>
+
+      <p>
+        <em>Caveat:</em> if you renamed files in a way that strips or
+        changes the trailing code, those files can't be matched and will
+        be reported as skipped. The error message tells you which.
+      </p>
+
+      <h2 class="gl-h2">Course readings</h2>
+      <p>
+        The <strong>Readings</strong> tab on a course is for PDFs you want
+        students to access — articles, syllabi, references. Drop one or
+        many PDFs at once. They appear in a list with names and upload
+        dates. Students see the same list on their version of the course
+        page.
+      </p>
+      <p>
+        Only PDFs (the kind of thing you typically share with a class).
+        For drafts and student-written work, that's the assignment system.
+      </p>
+
+      <h2 class="gl-h2">Course settings</h2>
+      <p>
+        From a course page, click <strong>Settings</strong>. Three actions:
+      </p>
+
+      <h3 class="gl-h3">Save as template</h3>
+      <p>
+        Captures the course's structure — title, all assignments,
+        stage names — for reuse next year. Reading filenames are saved as
+        an informational reference (the actual PDFs aren't copied). Save
+        the same course as a template anytime; it's not destructive.
+      </p>
+
+      <h3 class="gl-h3">Archive</h3>
+      <p>
+        Hides the course from the active courses list. Reversible.
+        Useful for last semester's courses you're not done with but
+        don't want cluttering the main view.
+      </p>
+
+      <h3 class="gl-h3">Delete</h3>
+      <p>
+        Permanently destroys the course. Two-step process:
+      </p>
+      <ol>
+        <li>
+          A backup zip downloads to your computer first. It contains
+          course metadata, all assignments, the roster (CSV), submission
+          records, and (optionally) the actual submission and return
+          files. The audit log entries for this course are also included.
+        </li>
+        <li>
+          Once you confirm the backup landed safely, deletion runs:
+          all storage files for the course are removed, the course row
+          is deleted (cascading to assignments, submissions, etc.), and
+          any students who were <em>only</em> in this course are also
+          deleted from auth. Students who are still in another course
+          stay; their account survives.
+        </li>
+      </ol>
+      <p>
+        To confirm, you type the course title exactly. Cannot be undone.
+        There is no soft-delete after this point.
+      </p>
+
+      <div class="gl-callout">
+        Save as template <em>before</em> deleting if you'll teach this
+        course again. The template lives independently of the course.
+      </div>
+
+      <h2 class="gl-h2">Templates</h2>
+      <p>
+        From the courses page header, click <strong>Templates</strong>.
+        You see all templates you've saved. Click one to:
+      </p>
+      <ul>
+        <li>Preview the assignments and reading filenames it stores</li>
+        <li>
+          Create a new course from it — you pick the new course's title,
+          term, and year; the assignments get duplicated with empty due
+          dates, ready for you to fill in
+        </li>
+        <li>Delete the template</li>
+      </ul>
+
+      <h2 class="gl-h2">Audit log</h2>
+      <p>
+        Click <strong>Audit</strong> in the courses list header. You see
+        a chronological list of significant actions you've taken across
+        all your courses: uploads, returns, archive/unarchive, course
+        creation/deletion, template saves. Filterable by course.
+      </p>
+
+      <h2 class="gl-h2">Themes</h2>
+      <p>
+        Every page has a Light / Auto / Dark toggle in the footer. Auto
+        follows your system theme. The choice persists across sessions.
+      </p>
+
+    </div>
+
+    <footer class="gl-footer">
+      <span class="gl-footer-tagline">A fresh surface. Start from scratch.</span>
+      <span>
+        <a href="index.html">Home</a> ·
+        <a href="installation.html">Installation</a> ·
+        <a href="student-manual.html">Student</a>
+      </span>
+    </footer>
+  </main>
+
+  <script src="theme.js"></script>
+</body>
+</html>

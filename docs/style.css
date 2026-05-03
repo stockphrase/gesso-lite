@@ -1,0 +1,340 @@
+/* ============================================================================
+ * Gesso Lite docs — shared styles
+ * Mirrors the application's aesthetic: black/white/hairline minimal, with
+ * accent orange (#c25410) and a small set of utility classes.
+ * ========================================================================= */
+
+:root {
+  --gl-ink: #0a0a0a;
+  --gl-paper: #ffffff;
+  --gl-mute: #6b6b6b;
+  --gl-soft: #f4f4f2;
+  --gl-line: #1a1a1a;
+  --gl-hairline: rgba(10, 10, 10, 0.12);
+  --gl-accent: #c25410;
+  --gl-accent-soft: #fdf1e6;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --gl-ink: #f0f0ee;
+  --gl-paper: #0a0a0a;
+  --gl-mute: #888783;
+  --gl-soft: #181816;
+  --gl-line: #f0f0ee;
+  --gl-hairline: rgba(240, 240, 238, 0.16);
+  --gl-accent: #d97a40;
+  --gl-accent-soft: #2a1c10;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--gl-paper);
+  color: var(--gl-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--gl-hairline);
+  padding-bottom: 1px;
+  transition: border-color 120ms ease;
+}
+a:hover {
+  border-bottom-color: var(--gl-ink);
+}
+
+a.gl-accent-link {
+  color: var(--gl-accent);
+  border-bottom-color: rgba(194, 84, 16, 0.3);
+}
+a.gl-accent-link:hover {
+  border-bottom-color: var(--gl-accent);
+}
+
+.gl-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 64px 32px;
+}
+
+.gl-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gl-mute);
+  font-weight: 500;
+  margin: 0 0 12px;
+}
+
+.gl-title {
+  font-size: 56px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0 0 12px;
+}
+
+.gl-tagline {
+  font-size: 22px;
+  color: var(--gl-mute);
+  font-weight: 400;
+  margin: 0 0 32px;
+  letter-spacing: -0.005em;
+}
+
+.gl-h1 {
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+}
+
+.gl-h2 {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 56px 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--gl-line);
+  letter-spacing: -0.01em;
+}
+
+.gl-h3 {
+  font-size: 17px;
+  font-weight: 500;
+  margin: 32px 0 8px;
+  letter-spacing: -0.005em;
+}
+
+.gl-lede {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--gl-ink);
+  margin: 0 0 24px;
+}
+
+.gl-prose p {
+  margin: 0 0 16px;
+}
+
+.gl-prose ul, .gl-prose ol {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+.gl-prose li {
+  margin: 0 0 6px;
+}
+
+.gl-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--gl-soft);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+.gl-prose pre {
+  background: var(--gl-soft);
+  padding: 16px 18px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  border-left: 2px solid var(--gl-hairline);
+  margin: 16px 0 24px;
+}
+.gl-prose pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+.gl-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 32px 0 56px;
+}
+
+.gl-btn {
+  display: inline-block;
+  padding: 12px 18px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+  border: 1px solid var(--gl-line);
+  background: transparent;
+  color: var(--gl-ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.gl-btn:hover {
+  background: var(--gl-ink);
+  color: var(--gl-paper);
+  border-color: var(--gl-ink);
+}
+
+.gl-btn-accent {
+  background: var(--gl-accent);
+  color: var(--gl-paper);
+  border-color: var(--gl-accent);
+}
+.gl-btn-accent:hover {
+  background: transparent;
+  color: var(--gl-accent);
+}
+
+.gl-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin: 24px 0;
+}
+
+.gl-feature {
+  padding: 0;
+}
+.gl-feature-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0 0 6px;
+}
+.gl-feature-body {
+  font-size: 14px;
+  color: var(--gl-mute);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.gl-roles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin: 24px 0;
+}
+.gl-role h3 {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+  color: var(--gl-mute);
+}
+.gl-role ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.gl-role li {
+  font-size: 14px;
+  margin: 0 0 6px;
+  padding: 6px 0;
+  border-bottom: 0.5px solid var(--gl-hairline);
+}
+
+.gl-stack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px 32px;
+  margin: 24px 0;
+}
+.gl-stack-item {
+  padding: 0;
+}
+.gl-stack-name {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 2px;
+}
+.gl-stack-detail {
+  font-size: 12px;
+  color: var(--gl-mute);
+  margin: 0;
+}
+
+.gl-footer {
+  margin-top: 96px;
+  padding-top: 32px;
+  border-top: 1px solid var(--gl-hairline);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--gl-mute);
+}
+.gl-footer-tagline {
+  font-style: italic;
+  font-size: 13px;
+  color: var(--gl-ink);
+}
+
+.gl-theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: transparent;
+  border: 0.5px solid var(--gl-hairline);
+  padding: 6px 12px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gl-mute);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: border-color 120ms ease;
+}
+.gl-theme-toggle:hover {
+  border-color: var(--gl-ink);
+}
+
+.gl-back {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--gl-mute);
+  margin-bottom: 24px;
+  letter-spacing: 0.04em;
+  border-bottom-color: transparent;
+}
+.gl-back:hover {
+  border-bottom-color: var(--gl-mute);
+}
+
+.gl-callout {
+  background: var(--gl-accent-soft);
+  border-left: 2px solid var(--gl-accent);
+  padding: 14px 16px;
+  margin: 16px 0 24px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .gl-shell { padding: 40px 20px; }
+  .gl-title { font-size: 38px; }
+  .gl-tagline { font-size: 18px; }
+  .gl-h1 { font-size: 26px; }
+  .gl-h2 { font-size: 19px; }
+  .gl-grid-2,
+  .gl-roles,
+  .gl-stack {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .gl-theme-toggle {
+    top: 16px;
+    right: 16px;
+  }
+}

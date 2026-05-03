@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Manual — Gesso Lite</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('gesso-lite-docs-theme');
+        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+  <button class="gl-theme-toggle" id="gl-theme-toggle" type="button">
+    <span id="gl-theme-label">Dark</span>
+  </button>
+
+  <main class="gl-shell">
+    <a class="gl-back" href="index.html">← Gesso Lite</a>
+
+    <p class="gl-eyebrow">Manual</p>
+    <h1 class="gl-h1">For students</h1>
+    <p class="gl-lede">
+      Find your course, submit drafts, download returns. The whole site
+      should take about ten minutes to learn.
+    </p>
+
+    <div class="gl-prose">
+
+      <h2 class="gl-h2">Getting in</h2>
+      <p>
+        Your instructor will give you a URL (something like
+        <code>gesso.example.edu</code>) and tell you they've added you to
+        the class. Visit the URL → click <strong>Register</strong>.
+      </p>
+
+      <p>Fill in the form:</p>
+      <ul>
+        <li>Your full name</li>
+        <li>Your email — the same address your instructor added you with</li>
+        <li>A password (at least 8 characters)</li>
+      </ul>
+
+      <p>
+        If your email isn't on the list, you'll see "This email is not on
+        the class list." Contact your instructor to be added. Otherwise,
+        registration succeeds and you land on your courses page.
+      </p>
+
+      <h2 class="gl-h2">Your courses</h2>
+      <p>
+        The Courses page shows every course you're enrolled in. Click a
+        course to enter it.
+      </p>
+      <p>
+        Inside a course, you'll see two main areas:
+      </p>
+      <ul>
+        <li><strong>Assignments</strong> — the writing you'll be turning in</li>
+        <li><strong>Readings</strong> — PDFs your instructor has uploaded</li>
+      </ul>
+
+      <h2 class="gl-h2">Submitting an assignment</h2>
+      <p>
+        Click into an assignment. You'll see:
+      </p>
+      <ul>
+        <li>The assignment description (if any)</li>
+        <li>A list of stages — Outline, Draft 1, Final, etc. — with due dates</li>
+        <li>An upload box for each stage</li>
+      </ul>
+
+      <p>
+        For the stage you're working on, drag a file into the upload box
+        (or click to choose one). Accepted formats: <code>.doc</code>,
+        <code>.docx</code>, <code>.odt</code>. Maximum 50 MB.
+      </p>
+
+      <p>
+        After uploading, your submission appears in the stage's history
+        with a timestamp. If you submitted before the due date, it's
+        on time. If after, it's flagged as <strong>Late</strong>.
+      </p>
+
+      <h3 class="gl-h3">Resubmitting</h3>
+      <p>
+        You can replace your submission anytime by uploading a new file
+        for the same stage — the new one supersedes the old. (Your
+        instructor sees only the latest.)
+      </p>
+
+      <h3 class="gl-h3">Late submissions</h3>
+      <p>
+        Submitting after a stage's due date is allowed. The submission
+        is marked Late so your instructor knows. Whether late submissions
+        are accepted is a course-by-course policy decision; ask your
+        instructor.
+      </p>
+
+      <h2 class="gl-h2">Receiving feedback</h2>
+      <p>
+        When your instructor returns marked-up work, the <strong>Returns</strong>
+        column on the assignment page populates. Click the file to download.
+        The marked-up version is yours to keep — Gesso Lite isn't going to
+        delete it on you, but a copy in your own backup is wise.
+      </p>
+
+      <h2 class="gl-h2">Reading PDFs</h2>
+      <p>
+        On the course page, click <strong>Readings</strong>. You see the
+        list of PDFs your instructor uploaded. Click any name to download.
+      </p>
+
+      <h2 class="gl-h2">Account</h2>
+
+      <h3 class="gl-h3">Resetting your password</h3>
+      <p>
+        On the sign-in page, click <strong>Forgot password?</strong>.
+        Enter your email. You'll get a reset link by email; the link
+        opens a page where you set a new password. The link is valid
+        for an hour.
+      </p>
+
+      <h3 class="gl-h3">Signing out</h3>
+      <p>
+        Use the Sign Out link in the page footer. It clears your session
+        on this device.
+      </p>
+
+      <h3 class="gl-h3">Themes</h3>
+      <p>
+        The footer also has a Light / Auto / Dark toggle. Auto follows
+        your operating system. The choice sticks across sessions.
+      </p>
+
+      <h2 class="gl-h2">Getting help</h2>
+      <p>
+        Anything broken or confusing — talk to your instructor first.
+        They have visibility into the course's state.
+      </p>
+
+      <h2 class="gl-h2">A note on what we keep</h2>
+      <div class="gl-callout">
+        Gesso Lite stores: your name, your email, your submissions, your
+        instructor's marked-up returns. Nothing else. No tracking, no
+        analytics, no behavioral data. When the course is deleted at
+        the end of the semester, all of this is destroyed too — your
+        instructor downloads a backup, then the rest is wiped.
+      </div>
+
+    </div>
+
+    <footer class="gl-footer">
+      <span class="gl-footer-tagline">A fresh surface. Start from scratch.</span>
+      <span>
+        <a href="index.html">Home</a> ·
+        <a href="installation.html">Installation</a> ·
+        <a href="instructor-manual.html">Instructor</a>
+      </span>
+    </footer>
+  </main>
+
+  <script src="theme.js"></script>
+</body>
+</html>

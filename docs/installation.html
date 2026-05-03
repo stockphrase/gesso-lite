@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Installation — Gesso Lite</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('gesso-lite-docs-theme');
+        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+  <button class="gl-theme-toggle" id="gl-theme-toggle" type="button">
+    <span id="gl-theme-label">Dark</span>
+  </button>
+
+  <main class="gl-shell">
+    <a class="gl-back" href="index.html">← Gesso Lite</a>
+
+    <p class="gl-eyebrow">Manual</p>
+    <h1 class="gl-h1">Installation</h1>
+    <p class="gl-lede">
+      Stand up your own copy of Gesso Lite. About 30 minutes if you've
+      used Supabase and Vercel before; longer if it's all new.
+    </p>
+
+    <div class="gl-prose">
+
+      <h2 class="gl-h2">Prerequisites</h2>
+      <ul>
+        <li>A GitHub account</li>
+        <li>A Supabase account (free tier is fine)</li>
+        <li>A Vercel account (free Hobby tier is fine)</li>
+        <li>Node.js 20 or later, locally, if you want to run a dev server</li>
+        <li>A domain you control, if you want a real URL (otherwise you'll be on a <code>*.vercel.app</code> URL)</li>
+      </ul>
+
+      <h2 class="gl-h2">1. Fork the repo</h2>
+      <p>
+        Go to <a class="gl-accent-link" href="https://github.com/stockphrase/gesso-lite">github.com/stockphrase/gesso-lite</a>
+        and click Fork. You'll get your own copy at <code>github.com/your-username/gesso-lite</code>.
+      </p>
+
+      <h2 class="gl-h2">2. Create a Supabase project</h2>
+      <ol>
+        <li>Go to <a class="gl-accent-link" href="https://supabase.com">supabase.com</a> and sign in.</li>
+        <li>New Project. Pick any name (e.g. "gesso-lite-prod"). Set a strong database password and save it.</li>
+        <li>Pick the region closest to your users.</li>
+        <li>Wait ~2 minutes for the project to be ready.</li>
+      </ol>
+
+      <h2 class="gl-h2">3. Run the database migrations</h2>
+      <p>
+        In your forked repo there's a <code>supabase/migrations/</code> directory with numbered SQL files.
+        Open the Supabase dashboard for your new project, go to <strong>SQL Editor</strong>, and run each
+        migration file in order:
+      </p>
+      <ul>
+        <li><code>0001_initial_schema.sql</code> — tables, RLS policies, helpers, triggers</li>
+        <li><code>0002_is_instructor_email.sql</code> — RPC for the registration page</li>
+        <li><code>0003_handle_new_user_with_name.sql</code> — captures display name</li>
+        <li><code>0004_storage_submissions.sql</code> — submission file policies</li>
+        <li><code>0005_student_code.sql</code> — generates per-student short codes</li>
+        <li><code>0006_storage_returns.sql</code> — return file policies</li>
+        <li><code>0007_storage_readings.sql</code> — readings file policies</li>
+        <li><code>0008_course_templates.sql</code> — templates table</li>
+      </ul>
+      <p>
+        After running them all, paste this into the SQL editor to verify everything's in place:
+      </p>
+      <pre><code>SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public' ORDER BY table_name;</code></pre>
+      <p>
+        You should see: <code>allowed_emails</code>, <code>app_config</code>,
+        <code>assignments</code>, <code>audit_log</code>, <code>course_memberships</code>,
+        <code>course_templates</code>, <code>courses</code>, <code>profiles</code>,
+        <code>reading_files</code>, <code>submissions</code>.
+      </p>
+
+      <h2 class="gl-h2">4. Set the instructor email</h2>
+      <p>
+        Gesso Lite is single-instructor. Tell the database who that is:
+      </p>
+      <pre><code>INSERT INTO public.app_config (id, instructor_email)
+VALUES (1, 'your-email@example.com')
+ON CONFLICT (id) DO UPDATE SET instructor_email = EXCLUDED.instructor_email;</code></pre>
+      <p>
+        When you register the first user with this email address, they're
+        automatically promoted to instructor. Other users register as
+        students by default.
+      </p>
+
+      <h2 class="gl-h2">5. Configure storage</h2>
+      <ol>
+        <li>In the Supabase dashboard: <strong>Storage → New bucket</strong></li>
+        <li>Name: <code>course-files</code></li>
+        <li>Public: off (private)</li>
+        <li>File size limit: 50 MB</li>
+        <li>
+          Allowed MIME types:
+          <code>application/msword</code>,
+          <code>application/vnd.openxmlformats-officedocument.wordprocessingml.document</code>,
+          <code>application/vnd.oasis.opendocument.text</code>,
+          <code>application/pdf</code>
+        </li>
+      </ol>
+
+      <h2 class="gl-h2">6. Disable email confirmation</h2>
+      <p>
+        Authentication → Providers → Email → uncheck "Confirm email".
+        Save. (For a class of trusted students added by whitelist, this
+        removes a major source of friction.)
+      </p>
+
+      <h2 class="gl-h2">7. Get your API keys</h2>
+      <p>Settings → API. You'll need:</p>
+      <ul>
+        <li>Project URL (e.g. <code>https://xxxxx.supabase.co</code>)</li>
+        <li>Anon key (public)</li>
+        <li>Service role key (secret — never commit it)</li>
+      </ul>
+
+      <h2 class="gl-h2">8. Deploy to Vercel</h2>
+      <ol>
+        <li>Go to <a class="gl-accent-link" href="https://vercel.com/new">vercel.com/new</a>.</li>
+        <li>Import your forked repo.</li>
+        <li>Framework: Next.js (auto-detected). Root directory: <code>./</code>. Default build settings.</li>
+        <li>Expand Environment Variables and add three:
+          <pre><code>NEXT_PUBLIC_SUPABASE_URL = https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY = (paste anon key)
+SUPABASE_SERVICE_ROLE_KEY = (paste service role key)</code></pre>
+        </li>
+        <li>Deploy.</li>
+      </ol>
+
+      <h2 class="gl-h2">9. Tell Supabase about your URL</h2>
+      <p>
+        After Vercel finishes, copy the URL it gives you (e.g.
+        <code>gesso-lite-yourname.vercel.app</code>) and add it to Supabase:
+      </p>
+      <ol>
+        <li>Authentication → URL Configuration</li>
+        <li>Site URL: <code>https://your-vercel-url</code></li>
+        <li>Redirect URLs: <code>https://your-vercel-url/**</code></li>
+      </ol>
+      <p>
+        This lets the password-reset flow work in production.
+      </p>
+
+      <h2 class="gl-h2">10. Register as the instructor</h2>
+      <p>
+        Visit your Vercel URL → <strong>/register</strong>. Use the email
+        address you set in step 4. Pick a password.
+      </p>
+      <p>
+        After registration, you should land on a courses list page. If you
+        see "(instructor)" in the role badge, the auto-promotion worked.
+      </p>
+
+      <div class="gl-callout">
+        <strong>Custom domain (optional):</strong> in Vercel → Settings → Domains, add your domain.
+        Vercel gives you a CNAME record to set at your DNS provider. After DNS propagates
+        (5–30 minutes), update Supabase's Site URL and Redirect URLs to use the custom domain.
+      </div>
+
+      <h2 class="gl-h2">Troubleshooting</h2>
+
+      <h3 class="gl-h3">Build fails on Vercel</h3>
+      <p>
+        Check the build log. Most common: TypeScript errors that didn't show locally.
+        Fix and push again — Vercel auto-redeploys.
+      </p>
+
+      <h3 class="gl-h3">"Invalid login credentials" but the user exists</h3>
+      <p>
+        Env vars on Vercel don't match Supabase. Re-paste both keys
+        carefully, watching for leading/trailing whitespace.
+      </p>
+
+      <h3 class="gl-h3">Password-reset email arrives but the link 404s</h3>
+      <p>
+        Site URL or Redirect URLs in Supabase don't include your production URL.
+        Update them.
+      </p>
+
+      <h3 class="gl-h3">Course deletion fails on production</h3>
+      <p>
+        The <code>SUPABASE_SERVICE_ROLE_KEY</code> environment variable
+        is missing or wrong. Check Vercel → Settings → Environment Variables.
+      </p>
+
+    </div>
+
+    <footer class="gl-footer">
+      <span class="gl-footer-tagline">A fresh surface. Start from scratch.</span>
+      <span>
+        <a href="index.html">Home</a> ·
+        <a href="instructor-manual.html">Instructor</a> ·
+        <a href="student-manual.html">Student</a>
+      </span>
+    </footer>
+  </main>
+
+  <script src="theme.js"></script>
+</body>
+</html>

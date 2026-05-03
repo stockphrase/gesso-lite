@@ -1,0 +1,14 @@
+# GitHub Pages config for Gesso Lite docs.
+# Tells Jekyll to serve the static HTML files as-is, no theme processing.
+plugins: []
+theme: null
+
+# Skip Jekyll's default file processing. Our HTML files are self-contained.
+include:
+  - "*.html"
+  - "*.css"
+  - "*.js"
+
+# Don't generate sitemap, RSS feed, etc.
+exclude:
+  - README.md
