@@ -62,9 +62,7 @@ export default function ReadingsClient({
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-  const [result, setResult] = useState<
-    { saved: number; skipped: SkipEntry[] } | null
-  >(null)
+  const [result, setResult] = useState<{ saved: number; skipped: SkipEntry[] } | null>(null)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -143,12 +141,8 @@ export default function ReadingsClient({
             </span>
             <a
               href={`/api/readings/zip/${courseId}`}
-              style={{
-                color: 'var(--gl-mute)',
-                textDecoration: 'none',
-                borderBottom: '0.5px solid var(--gl-hairline)',
-                paddingBottom: 1,
-              }}
+              className="gl-btn-ghost"
+              style={{ textDecoration: 'none' }}
             >
               Download all
             </a>

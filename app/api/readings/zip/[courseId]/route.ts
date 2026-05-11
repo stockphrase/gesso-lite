@@ -27,11 +27,15 @@ export async function GET(
     return NextResponse.json({ error: 'Not signed in.' }, { status: 401 })
   }
 
-  // Authorization: any course member.
+  // Authorization: instructor of the course OR enrolled member.
   const { data: isMember } = await supabase.rpc('is_member_of_course', {
     check_course_id: courseId,
   })
-  if (!isMember) {
+  const { data: isInstructor } = await supabase.rpc(
+    'is_instructor_of_course',
+    { check_course_id: courseId }
+  )
+  if (!isMember && !isInstructor) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 })
   }
 
@@ -60,7 +64,6 @@ export async function GET(
     let candidate = r.filename
     let n = 2
     while (seen.has(candidate)) {
-      // If two readings somehow have the same filename, suffix with _2, _3...
       const dot = r.filename.lastIndexOf('.')
       if (dot < 0) {
         candidate = `${r.filename}_${n}`
