@@ -19,8 +19,6 @@ export async function updateAssignment(
   const dates = formData.getAll('stage_due_date').map((v) => String(v).trim())
   const oldNames = formData.getAll('stage_old_name').map((v) => String(v).trim())
 
-  // Build the new stages array. oldNames[i] is the previous name (empty string
-  // for newly-added stages); names[i] is the new name; dates[i] is the new date.
   const newStages: Stage[] = []
   const renames: { from: string; to: string }[] = []
 
@@ -42,7 +40,6 @@ export async function updateAssignment(
     return { error: 'At least one stage is required.' }
   }
 
-  // Detect duplicate stage names in the new list.
   const seen = new Set<string>()
   for (const s of newStages) {
     if (seen.has(s.name)) {
@@ -63,7 +60,6 @@ export async function updateAssignment(
   )
   if (!isInstructor) return { error: 'Not authorized.' }
 
-  // Verify assignment belongs to this course and pull existing stages.
   const { data: assignment } = await supabase
     .from('assignments')
     .select('id, course_id, stages')
@@ -77,14 +73,11 @@ export async function updateAssignment(
   const oldNameSet = new Set(oldStages.map((s) => s.name))
   const newNameSet = new Set(newStages.map((s) => s.name))
 
-  // Detect deleted stages (present before, not present in new list).
   const deletedStages = [...oldNameSet].filter((n) => !newNameSet.has(n))
-  // Account for renames: a "deleted" stage that's actually being renamed is fine.
   const renameFromSet = new Set(renames.map((r) => r.from))
   const trulyDeletedStages = deletedStages.filter((n) => !renameFromSet.has(n))
 
   if (trulyDeletedStages.length > 0) {
-    // Check whether any of the deleted stages have existing submissions.
     const { count } = await supabase
       .from('submissions')
       .select('id', { count: 'exact', head: true })
@@ -100,7 +93,6 @@ export async function updateAssignment(
     }
   }
 
-  // Apply renames atomically: update submissions for each rename.
   for (const r of renames) {
     const { error: renameError } = await supabase
       .from('submissions')
@@ -115,7 +107,6 @@ export async function updateAssignment(
     }
   }
 
-  // Update the assignment row.
   const { error: updateError } = await supabase
     .from('assignments')
     .update({
@@ -146,8 +137,11 @@ export async function updateAssignment(
 
 export async function deleteAssignment(
   courseId: number,
-  assignmentId: number
-): Promise<{ error?: string }> {
+  assignmentId: number,
+  options?: { cascade?: boolean }
+): Promise<{ error?: string; requires_cascade?: { submissions: number; returns: number } }> {
+  const cascade = options?.cascade === true
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -169,15 +163,60 @@ export async function deleteAssignment(
     return { error: 'Assignment not found.' }
   }
 
-  // Check if there are submissions; if so, don't allow deletion.
-  const { count } = await supabase
+  // Fetch all submissions for this assignment (needed for both check and cascade).
+  const { data: submissions } = await supabase
     .from('submissions')
-    .select('id', { count: 'exact', head: true })
+    .select('id, storage_path, returned_storage_path')
     .eq('assignment_id', assignmentId)
 
-  if ((count ?? 0) > 0) {
+  const subs = submissions ?? []
+  const submissionCount = subs.length
+  const returnCount = subs.filter((s) => s.returned_storage_path).length
+
+  // If submissions exist and caller didn't explicitly opt-in to cascade,
+  // return a signal so the UI can prompt with counts.
+  if (submissionCount > 0 && !cascade) {
     return {
-      error: `This assignment has ${count} submission${count === 1 ? '' : 's'}. Delete those first or delete the entire course.`,
+      requires_cascade: {
+        submissions: submissionCount,
+        returns: returnCount,
+      },
+    }
+  }
+
+  // Cascade path: delete storage files, then submission rows, then the
+  // assignment. Storage failures are logged but don't block the DB delete.
+  const storagePaths: string[] = []
+  for (const s of subs) {
+    if (s.storage_path) storagePaths.push(s.storage_path)
+    if (s.returned_storage_path) storagePaths.push(s.returned_storage_path)
+  }
+
+  if (storagePaths.length > 0) {
+    // Storage removal chunked at 1000.
+    for (let i = 0; i < storagePaths.length; i += 1000) {
+      const chunk = storagePaths.slice(i, i + 1000)
+      const { error: rmError } = await supabase.storage
+        .from('course-files')
+        .remove(chunk)
+      if (rmError) {
+        console.warn(
+          `[assignment-delete] storage cleanup: ${rmError.message}`
+        )
+      }
+    }
+  }
+
+  if (submissionCount > 0) {
+    const { error: subDelError } = await supabase
+      .from('submissions')
+      .delete()
+      .eq('assignment_id', assignmentId)
+
+    if (subDelError) {
+      return {
+        error: `Could not delete submissions: ${subDelError.message}`,
+      }
     }
   }
 
@@ -194,7 +233,12 @@ export async function deleteAssignment(
     p_action: 'assignment.deleted',
     p_target_type: 'course',
     p_target_id: String(courseId),
-    p_details: { assignment_id: assignmentId, title: assignment.title },
+    p_details: {
+      assignment_id: assignmentId,
+      title: assignment.title,
+      cascaded_submissions: submissionCount,
+      cascaded_returns: returnCount,
+    },
   })
 
   redirect(`/courses/${courseId}`)

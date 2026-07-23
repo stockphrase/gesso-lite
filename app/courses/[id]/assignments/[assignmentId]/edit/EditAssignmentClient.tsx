@@ -10,7 +10,7 @@ type StageDraft = {
   id: string
   name: string
   dueDate: string
-  oldName: string // empty for newly-added stages
+  oldName: string
 }
 
 function freshStage(): StageDraft {
@@ -101,15 +101,46 @@ export default function EditAssignmentClient({
   }
 
   function handleDelete() {
-    if (
-      !confirm(
-        `Delete assignment "${initialTitle}"? This cannot be undone. Submissions cannot exist for the assignment.`
-      )
-    )
-      return
+    setError(null)
+
     startTransition(async () => {
-      const result = await deleteAssignment(courseId, assignmentId)
-      if (result?.error) setError(result.error)
+      // First call: no cascade opt-in. Server may return counts if submissions exist.
+      const probe = await deleteAssignment(courseId, assignmentId)
+
+      if (probe?.error) {
+        setError(probe.error)
+        return
+      }
+
+      if (probe?.requires_cascade) {
+        const { submissions, returns } = probe.requires_cascade
+        const parts: string[] = []
+        parts.push(
+          `${submissions} ${submissions === 1 ? 'submission' : 'submissions'}`
+        )
+        if (returns > 0) {
+          parts.push(
+            `${returns} ${returns === 1 ? 'marked-up return' : 'marked-up returns'}`
+          )
+        }
+        const msg =
+          `Delete "${initialTitle}"?\n\n` +
+          `This will also permanently delete ${parts.join(' and ')}. ` +
+          `Files will be removed from storage. This cannot be undone.`
+
+        if (!confirm(msg)) return
+
+        const cascadeResult = await deleteAssignment(courseId, assignmentId, {
+          cascade: true,
+        })
+        if (cascadeResult?.error) {
+          setError(cascadeResult.error)
+        }
+        return
+      }
+
+      // No submissions — the server already deleted and redirected.
+      // We only get here if the server response somehow didn't redirect.
     })
   }
 
@@ -351,8 +382,8 @@ export default function EditAssignmentClient({
             margin: '0 0 10px',
           }}
         >
-          Permanently delete this assignment. Only allowed if no submissions
-          exist for it.
+          Permanently delete this assignment. If submissions exist, they will
+          also be permanently deleted (with a confirmation prompt).
         </p>
         <button
           type="button"
