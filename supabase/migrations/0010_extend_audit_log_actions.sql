@@ -9,27 +9,17 @@
 -- operation (rename, backup, template save/delete, instantiate-from-template)
 -- still succeeds, but nothing is written to the audit log.
 --
--- This migration drops the old constraint (found dynamically, since it was
--- unnamed in 0001 and Postgres auto-generated its name) and replaces it with
--- one covering every action string the app actually uses today.
+-- This migration drops the old constraint and replaces it with one covering
+-- every action string the app actually uses today. The constraint was
+-- unnamed in 0001, but Postgres's default auto-generated name for a
+-- single-column table-level CHECK is `<table>_<column>_check`, i.e.
+-- `audit_log_action_check` — confirmed against a live database, so we drop
+-- it by that name directly (IF EXISTS makes this safe to re-run).
 -- 'course.exported' is kept for backward compatibility with any historical
 -- rows, though the app no longer writes it (course.backup replaced it).
 -- ============================================================================
 
-DO $$
-DECLARE
-  v_conname text;
-BEGIN
-  SELECT conname INTO v_conname
-  FROM pg_constraint
-  WHERE conrelid = 'public.audit_log'::regclass
-    AND contype = 'c'
-    AND pg_get_constraintdef(oid) LIKE '%action%IN%';
-
-  IF v_conname IS NOT NULL THEN
-    EXECUTE format('ALTER TABLE public.audit_log DROP CONSTRAINT %I', v_conname);
-  END IF;
-END $$;
+ALTER TABLE public.audit_log DROP CONSTRAINT IF EXISTS audit_log_action_check;
 
 ALTER TABLE public.audit_log
   ADD CONSTRAINT audit_log_action_check CHECK (action IN (
