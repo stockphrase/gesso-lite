@@ -35,6 +35,10 @@ export default async function TemplateDetailPage({
     .eq('id', user.id)
     .single()
 
+  if (profile?.role !== 'instructor') {
+    redirect('/courses')
+  }
+
   const { data: template } = await supabase
     .from('course_templates')
     .select('id, name, course_title_default, assignments, previous_readings, created_at')

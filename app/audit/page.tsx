@@ -219,10 +219,12 @@ export default async function AuditPage({
     redirect('/courses')
   }
 
+  // RLS already restricts audit_log reads to instructor accounts; don't
+  // additionally filter to user_id = this instructor, or actions taken by
+  // students/tutors (submissions, etc.) would never show up here.
   let query = supabase
     .from('audit_log')
     .select('id, user_id, action, target_type, target_id, details, created_at')
-    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -267,6 +269,32 @@ export default async function AuditPage({
   const assignmentsById = new Map(
     (allAssignments ?? []).map((a) => [a.id, a as { id: number; course_id: number; title: string }])
   )
+
+  // Actions can now be logged by students/tutors too (e.g. submission
+  // uploads), so resolve actor names/emails to label entries that aren't "you".
+  const actorIds = [
+    ...new Set(
+      auditEntries.map((e) => e.user_id).filter((id): id is string => !!id)
+    ),
+  ]
+  const { data: actorProfiles } =
+    actorIds.length > 0
+      ? await supabase
+          .from('profiles')
+          .select('id, name, email')
+          .in('id', actorIds)
+      : { data: [] }
+  const actorById = new Map(
+    (actorProfiles ?? []).map((p) => [p.id, p] as const)
+  )
+
+  const currentUserId = user.id
+
+  function actorLabel(entry: AuditEntry): string {
+    if (entry.user_id === currentUserId) return 'You'
+    const actor = entry.user_id ? actorById.get(entry.user_id) : null
+    return actor?.name ?? actor?.email ?? 'Someone'
+  }
 
   return (
     <main className="gl-page">
@@ -389,7 +417,7 @@ export default async function AuditPage({
                 </div>
                 <div>
                   <p style={{ margin: 0, fontSize: 14 }}>
-                    You {actionVerb(entry)}
+                    {actorLabel(entry)} {actionVerb(entry)}
                     {ref && (
                       <>
                         {' '}
