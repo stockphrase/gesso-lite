@@ -19,7 +19,12 @@ export async function POST(
     return NextResponse.json({ error: 'Not signed in.' }, { status: 401 })
   }
 
-  let body: { title?: string; term?: string; year?: number }
+  let body: {
+    title?: string
+    term?: string
+    year?: number
+    cloneDueDates?: boolean
+  }
   try {
     body = await request.json()
   } catch {
@@ -29,6 +34,7 @@ export async function POST(
   const title = String(body.title ?? '').trim()
   const term = String(body.term ?? '').trim()
   const year = body.year
+  const cloneDueDates = body.cloneDueDates === true
 
   if (!title) {
     return NextResponse.json({ error: 'Course title required.' }, {
@@ -87,7 +93,7 @@ export async function POST(
   type TemplateAssignment = {
     title: string
     description: string | null
-    stages: { name: string }[]
+    stages: { name: string; due_date?: string | null }[]
   }
   const assignments = (template.assignments ?? []) as TemplateAssignment[]
 
@@ -96,7 +102,10 @@ export async function POST(
       course_id: course.id,
       title: a.title,
       description: a.description,
-      stages: a.stages.map((s) => ({ name: s.name, due_date: null })),
+      stages: a.stages.map((s) => ({
+        name: s.name,
+        due_date: cloneDueDates ? (s.due_date ?? null) : null,
+      })),
       position: idx,
     }))
 
@@ -121,6 +130,7 @@ export async function POST(
     p_details: {
       template_id: templateId,
       assignment_count: assignments.length,
+      cloned_due_dates: cloneDueDates,
     },
   })
 

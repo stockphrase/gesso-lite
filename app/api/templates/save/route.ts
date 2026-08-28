@@ -43,7 +43,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 403 })
   }
 
-  // Pull assignments — keep title/description/stage names; drop dates.
+  // Pull assignments — keep title/description/stage names and due dates.
+  // Due dates are stored so they can optionally be cloned at instantiate
+  // time (e.g. creating another section of the same course in the same
+  // term); the instructor chooses whether to bring them over.
   const { data: rawAssignments } = await supabase
     .from('assignments')
     .select('title, description, stages, position')
@@ -61,7 +64,10 @@ export async function POST(request: Request) {
     (a) => ({
       title: a.title,
       description: a.description,
-      stages: (a.stages ?? []).map((s) => ({ name: s.name })),
+      stages: (a.stages ?? []).map((s) => ({
+        name: s.name,
+        due_date: s.due_date,
+      })),
     })
   )
 

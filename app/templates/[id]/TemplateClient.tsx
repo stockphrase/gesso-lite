@@ -16,6 +16,7 @@ export default function TemplateClient({
   const [title, setTitle] = useState(courseTitleDefault)
   const [term, setTerm] = useState<'Fall' | 'Winter'>('Fall')
   const [year, setYear] = useState(currentYear)
+  const [cloneDueDates, setCloneDueDates] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -30,7 +31,12 @@ export default function TemplateClient({
       const res = await fetch(`/api/templates/${templateId}/instantiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim(), term, year }),
+        body: JSON.stringify({
+          title: title.trim(),
+          term,
+          year,
+          cloneDueDates,
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -110,6 +116,22 @@ export default function TemplateClient({
             />
           </div>
 
+          <div style={{ marginBottom: 24 }}>
+            <label
+              htmlFor="cloneDueDates"
+              className="gl-label"
+              style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              <input
+                id="cloneDueDates"
+                type="checkbox"
+                checked={cloneDueDates}
+                onChange={(e) => setCloneDueDates(e.target.checked)}
+              />
+              Clone due dates from template
+            </label>
+          </div>
+
           {error && (
             <div className="gl-error" style={{ marginBottom: 16 }} role="alert">
               {error}
@@ -134,8 +156,9 @@ export default function TemplateClient({
             lineHeight: 1.5,
           }}
         >
-          The new course will have all the assignments from this template,
-          with empty due dates. You'll fill those in afterwards.
+          {cloneDueDates
+            ? "The new course will have all the assignments from this template, with due dates copied over. Useful when creating another section of the same course in the same term — double-check the dates still make sense."
+            : "The new course will have all the assignments from this template, with empty due dates. You'll fill those in afterwards."}
         </p>
       </div>
 
