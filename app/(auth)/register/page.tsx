@@ -52,8 +52,15 @@ export default function RegisterPage() {
       }
 
       if (!allowed) {
+        const { data: alreadyRegistered } = await supabase.rpc(
+          'is_email_registered',
+          { check_email: email }
+        )
+
         setError(
-          'This email is not on the class list. Ask your instructor to add it, then come back.'
+          alreadyRegistered
+            ? 'This email already has an account. Sign in instead using the link below.'
+            : 'This email is not on the class list. Ask your instructor to add it, then come back.'
         )
         setSubmitting(false)
         return
