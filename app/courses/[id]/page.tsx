@@ -80,7 +80,7 @@ export default async function CourseHomePage({
 
   const { data: readingRows } = await supabase
     .from('reading_files')
-    .select('id, filename, size_bytes, uploaded_at')
+    .select('id, filename, display_name, citation, size_bytes, uploaded_at')
     .eq('course_id', courseId)
     .order('uploaded_at', { ascending: false })
   const readings = readingRows ?? []

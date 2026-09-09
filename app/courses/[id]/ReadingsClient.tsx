@@ -7,6 +7,8 @@ import FilePicker from '@/app/_components/FilePicker'
 type Reading = {
   id: number
   filename: string
+  display_name: string | null
+  citation: string | null
   size_bytes: number | null
   uploaded_at: string
 }
@@ -63,6 +65,10 @@ export default function ReadingsClient({
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [result, setResult] = useState<{ saved: number; skipped: SkipEntry[] } | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [displayNameField, setDisplayNameField] = useState('')
+  const [citationField, setCitationField] = useState('')
+  const [editError, setEditError] = useState<string | null>(null)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -94,6 +100,40 @@ export default function ReadingsClient({
       }
       setFile(null)
       setResult({ saved: data.saved ?? 0, skipped: data.skipped ?? [] })
+      router.refresh()
+    })
+  }
+
+  function startEdit(r: Reading) {
+    setEditingId(r.id)
+    setDisplayNameField(r.display_name ?? '')
+    setCitationField(r.citation ?? '')
+    setEditError(null)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditError(null)
+  }
+
+  function handleSaveEdit(id: number, e: React.FormEvent) {
+    e.preventDefault()
+    setEditError(null)
+    startTransition(async () => {
+      const res = await fetch(`/api/readings/update/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          display_name: displayNameField,
+          citation: citationField,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setEditError(data?.error ?? 'Could not save.')
+        return
+      }
+      setEditingId(null)
       router.refresh()
     })
   }
@@ -264,59 +304,159 @@ export default function ReadingsClient({
           <div
             key={r.id}
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
               padding: '10px 0',
               borderBottom: '0.5px solid var(--gl-hairline)',
-              gap: 12,
             }}
           >
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <p
+            {editingId === r.id ? (
+              <form onSubmit={(e) => handleSaveEdit(r.id, e)}>
+                <div style={{ marginBottom: 10 }}>
+                  <label htmlFor={`dn-${r.id}`} className="gl-label">
+                    Display name
+                  </label>
+                  <input
+                    id={`dn-${r.id}`}
+                    className="gl-input"
+                    type="text"
+                    value={displayNameField}
+                    onChange={(e) => setDisplayNameField(e.target.value)}
+                    placeholder={r.filename}
+                    autoFocus
+                  />
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <label htmlFor={`cit-${r.id}`} className="gl-label">
+                    Citation
+                  </label>
+                  <textarea
+                    id={`cit-${r.id}`}
+                    className="gl-textarea"
+                    value={citationField}
+                    onChange={(e) => setCitationField(e.target.value)}
+                  />
+                </div>
+                {editError && (
+                  <div
+                    className="gl-error"
+                    style={{ marginBottom: 10, fontSize: 13 }}
+                    role="alert"
+                  >
+                    {editError}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    className="gl-btn"
+                    style={{ width: 'auto', padding: '6px 12px', fontSize: 10 }}
+                  >
+                    {pending ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    className="gl-btn-ghost"
+                    onClick={cancelEdit}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div
                 style={{
-                  margin: 0,
-                  fontSize: 14,
-                  fontFamily:
-                    'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 12,
                 }}
               >
-                {r.filename}
-              </p>
-              <p
-                style={{
-                  margin: '2px 0 0',
-                  fontSize: 12,
-                  color: 'var(--gl-mute)',
-                }}
-              >
-                {formatBytes(r.size_bytes)}
-                {r.size_bytes !== null && ' · '}
-                uploaded {formatDate(r.uploaded_at)}
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-              <a
-                href={`/api/readings/download/${r.id}`}
-                className="gl-btn-ghost"
-                style={{ textDecoration: 'none' }}
-              >
-                Download
-              </a>
-              {isInstructor && (
-                <button
-                  type="button"
-                  className="gl-btn-ghost"
-                  onClick={() => handleDelete(r.id, r.filename)}
-                  disabled={pending}
-                >
-                  Delete
-                </button>
-              )}
-            </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 14,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontFamily: r.display_name
+                        ? undefined
+                        : 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                    }}
+                  >
+                    {r.display_name || r.filename}
+                  </p>
+                  {r.display_name && (
+                    <p
+                      style={{
+                        margin: '2px 0 0',
+                        fontSize: 12,
+                        color: 'var(--gl-mute)',
+                        fontFamily:
+                          'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {r.filename}
+                    </p>
+                  )}
+                  {r.citation && (
+                    <p
+                      style={{
+                        margin: '4px 0 0',
+                        fontSize: 12,
+                        color: 'var(--gl-mute)',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {r.citation}
+                    </p>
+                  )}
+                  <p
+                    style={{
+                      margin: '2px 0 0',
+                      fontSize: 12,
+                      color: 'var(--gl-mute)',
+                    }}
+                  >
+                    {formatBytes(r.size_bytes)}
+                    {r.size_bytes !== null && ' · '}
+                    uploaded {formatDate(r.uploaded_at)}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <a
+                    href={`/api/readings/download/${r.id}`}
+                    className="gl-btn-ghost"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Download
+                  </a>
+                  {isInstructor && (
+                    <>
+                      <button
+                        type="button"
+                        className="gl-btn-ghost"
+                        onClick={() => startEdit(r)}
+                        disabled={pending}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="gl-btn-ghost"
+                        onClick={() => handleDelete(r.id, r.filename)}
+                        disabled={pending}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ))
       )}

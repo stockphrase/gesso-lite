@@ -22,7 +22,7 @@ export async function GET(
   // RLS handles read authorization.
   const { data: reading } = await supabase
     .from('reading_files')
-    .select('id, filename, storage_path')
+    .select('id, filename, display_name, storage_path')
     .eq('id', readingId)
     .single()
 
@@ -30,10 +30,15 @@ export async function GET(
     return NextResponse.json({ error: 'Not found.' }, { status: 404 })
   }
 
+  let downloadName = reading.display_name?.trim() || reading.filename
+  if (!downloadName.toLowerCase().endsWith('.pdf')) {
+    downloadName += '.pdf'
+  }
+
   const { data: signed, error: signedError } = await supabase.storage
     .from('course-files')
     .createSignedUrl(reading.storage_path, 60, {
-      download: reading.filename,
+      download: downloadName,
     })
 
   if (signedError || !signed) {

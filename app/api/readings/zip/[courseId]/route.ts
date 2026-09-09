@@ -47,7 +47,7 @@ export async function GET(
 
   const { data: readings } = await supabase
     .from('reading_files')
-    .select('id, filename, storage_path')
+    .select('id, filename, display_name, storage_path')
     .eq('course_id', courseId)
     .order('uploaded_at', { ascending: false })
 
@@ -61,14 +61,19 @@ export async function GET(
   const seen = new Set<string>()
 
   for (const r of readings) {
-    let candidate = r.filename
+    let baseName = r.display_name?.trim() || r.filename
+    if (!baseName.toLowerCase().endsWith('.pdf')) {
+      baseName += '.pdf'
+    }
+
+    let candidate = baseName
     let n = 2
     while (seen.has(candidate)) {
-      const dot = r.filename.lastIndexOf('.')
+      const dot = baseName.lastIndexOf('.')
       if (dot < 0) {
-        candidate = `${r.filename}_${n}`
+        candidate = `${baseName}_${n}`
       } else {
-        candidate = `${r.filename.slice(0, dot)}_${n}${r.filename.slice(dot)}`
+        candidate = `${baseName.slice(0, dot)}_${n}${baseName.slice(dot)}`
       }
       n += 1
     }
