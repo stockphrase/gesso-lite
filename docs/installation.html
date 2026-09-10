@@ -70,7 +70,17 @@
         <li><code>0006_storage_returns.sql</code> — return file policies</li>
         <li><code>0007_storage_readings.sql</code> — readings file policies</li>
         <li><code>0008_course_templates.sql</code> — templates table</li>
+        <li><code>0009_data_api_grants.sql</code> — explicit Data API grants (required for new Supabase projects created after Oct 30, 2026)</li>
+        <li><code>0010_extend_audit_log_actions.sql</code> — extends the audit log to cover actions added since 0001</li>
+        <li><code>0011_security_lint_fixes.sql</code> — fixes Supabase security linter warnings</li>
+        <li><code>0012_is_email_registered.sql</code> — RPC the register page uses to distinguish "already registered" from "not on class list"</li>
+        <li><code>0013_reading_display_name_and_citation.sql</code> — adds reading display name/citation columns and fixes a duplicate-row bug on re-upload</li>
       </ul>
+      <p>
+        Run every migration through <code>0013</code> — the app code
+        depends on columns and RPCs added as late as that one. Skipping
+        any of them will break pages, not just optional features.
+      </p>
       <p>
         After running them all, paste this into the SQL editor to verify everything's in place:
       </p>
@@ -96,12 +106,18 @@ ON CONFLICT (id) DO UPDATE SET instructor_email = EXCLUDED.instructor_email;</co
         students by default.
       </p>
 
-      <h2 class="gl-h2">5. Configure storage</h2>
-      <ol>
-        <li>In the Supabase dashboard: <strong>Storage → New bucket</strong></li>
-        <li>Name: <code>course-files</code></li>
+      <h2 class="gl-h2">5. Verify the storage bucket</h2>
+      <p>
+        The migrations already created the <code>course-files</code> bucket
+        for you — migration <code>0004</code> creates it and
+        <code>0007</code> adds the readings MIME type, so there's nothing
+        to create by hand. In the Supabase dashboard, go to
+        <strong>Storage</strong> and confirm <code>course-files</code>
+        exists with:
+      </p>
+      <ul>
         <li>Public: off (private)</li>
-        <li>File size limit: 50 MB</li>
+        <li>File size limit: 10 MB (a hard cap set by the migration — don't raise it in the dashboard, a later migration run will reset it)</li>
         <li>
           Allowed MIME types:
           <code>application/msword</code>,
@@ -109,7 +125,12 @@ ON CONFLICT (id) DO UPDATE SET instructor_email = EXCLUDED.instructor_email;</co
           <code>application/vnd.oasis.opendocument.text</code>,
           <code>application/pdf</code>
         </li>
-      </ol>
+      </ul>
+      <p>
+        If any of this looks wrong, double-check migrations <code>0004</code>
+        and <code>0007</code> ran successfully rather than editing the
+        bucket directly.
+      </p>
 
       <h2 class="gl-h2">6. Disable email confirmation</h2>
       <p>
