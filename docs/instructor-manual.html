@@ -108,6 +108,16 @@
         rename instead, or remove the submissions first.
       </p>
 
+      <h3 class="gl-h3">Deleting an assignment</h3>
+      <p>
+        From the Edit page, <strong>Delete assignment</strong>. If there
+        are no submissions, it's removed immediately. If submissions (or
+        returns) exist, you're shown the count and asked to confirm —
+        confirming deletes the submission and return files from storage
+        along with the assignment. There's no separate soft-delete step,
+        so make sure you've downloaded anything you need first.
+      </p>
+
       <h2 class="gl-h2">Reviewing submissions</h2>
       <p>
         From an assignment page, you see every student who submitted, in
@@ -161,6 +171,14 @@
       <p>
         Only PDFs (the kind of thing you typically share with a class).
         For drafts and student-written work, that's the assignment system.
+      </p>
+      <p>
+        Click a reading to edit its <strong>display name</strong> and
+        <strong>citation</strong>. The display name replaces the raw
+        filename in the list (useful when the file itself is named
+        something like <code>scan0004.pdf</code>); the citation is free
+        text for the full bibliographic reference. Both are optional and
+        show to students alongside the file.
       </p>
 
       <h2 class="gl-h2">Course settings</h2>
@@ -222,8 +240,12 @@
         <li>Preview the assignments and reading filenames it stores</li>
         <li>
           Create a new course from it — you pick the new course's title,
-          term, and year; the assignments get duplicated with empty due
-          dates, ready for you to fill in
+          term, and year. By default the assignments get duplicated with
+          empty due dates, ready for you to fill in. Check
+          <strong>Clone due dates from template</strong> to copy the
+          stored due dates over instead — useful when creating another
+          section of the same course in the same term, though it's worth
+          double-checking the dates still make sense.
         </li>
         <li>Delete the template</li>
       </ul>
